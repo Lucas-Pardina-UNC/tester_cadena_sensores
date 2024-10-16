@@ -1,0 +1,20 @@
+Requerimientos Funcionales:
+
+    Detección de Sensores en la Cadena:
+        El programa debe ser capaz de escanear la cadena de sensores para identificar todos los dispositivos conectados.
+        Debe enviar comandos Modbus en modo unicast para leer el ID de cada sensor en su respectiva dirección y almacenar estos IDs junto con las direcciones de cada sensor en un registro interno.
+
+    Lectura de Datos de Sensores:
+        El programa debe permitir la lectura de valores de cada sensor en la cadena usando los comandos Modbus disponibles (como Read Input Registers y Read Holding Registers).
+        Los datos deben ser interpretados y presentados en unidades comprensibles (por ejemplo, temperatura en grados Celsius, humedad en porcentaje, etc.).
+        El programa debe implementar una verificación de coherencia en los datos, por ejemplo, validando si los valores se encuentran dentro de rangos esperados para cada tipo de sensor.
+
+    Control de Sensores mediante Coils:
+        Debe ser posible activar la lectura de un sensor o grupo de sensores utilizando los Coils Modbus descritos. El programa debe permitir configurar un Coil en 1 para iniciar una medición y monitorear que el sensor regrese el Coil a 0 después de completar la operación.
+
+
+    Configuración Dinámica de Parámetros:
+
+        El programa debe permitir modificar la dirección del sensor o la velocidad de comunicación Modbus a través de los comandos correspondientes (Write Holding Register en las direcciones 1 y 2).
+        El programa debe verificar y confirmar que las modificaciones se han realizado correctamente mediante una lectura de verificación posterior.
+
