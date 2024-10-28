@@ -32,25 +32,25 @@ def convertTempString(filename):
                 temp.write(f"{timestamp}")
                 
                 # Recorre cada esclavo y convierte temperatura
-                for i in range(1, 18):  # Asumiendo 17 esclavos
-                    # Obtener valor de ADC
-                    temp_line = line.split("=")
-                    adc_value = int(temp_line[1].strip())
+                #for i in range(1, 18):  # Asumiendo 17 esclavos
+                # Obtener valor de ADC
+                temp_line = line.split("=")
+                adc_value = int(temp_line[1].strip())
+                
+                if adc_value != 4444:  # Valor 4444 indica error
+                    air_temp_C = adc_to_temperature(adc_value)
                     
-                    if adc_value != 4444:  # Valor 4444 indica error
-                        air_temp_C = adc_to_temperature(adc_value)
-                        
-                        # Control de valores fuera de rango
-                        if air_temp_C < 0 or air_temp_C > 39:
-                            conv_log.write(f"{timestamp}\t{air_temp_C}\tconvertTempString fuera de rango\n")
-                            air_temp_C = 0
-                    else:
-                        conv_log.write(f"{timestamp}\tconvertTempString 4444\n")
+                    # Control de valores fuera de rango
+                    if air_temp_C < 0 or air_temp_C > 39:
+                        conv_log.write(f"{timestamp}\t{air_temp_C}\tconvertTempString fuera de rango\n")
                         air_temp_C = 0
-                    
-                    # Escribir valores de temperatura en °C
-                    outf.write(f"\t{air_temp_C:.2f}")
-                    temp.write(f"\t{air_temp_C:.2f}")
+                else:
+                    conv_log.write(f"{timestamp}\tconvertTempString 4444\n")
+                    air_temp_C = 0
+                
+                # Escribir valores de temperatura en °C
+                outf.write(f"\t{air_temp_C:.2f}")
+                temp.write(f"\t{air_temp_C:.2f}")
                 
                 outf.write("\n")
                 temp.write("\n")

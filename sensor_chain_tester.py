@@ -3,6 +3,7 @@ import serial.tools.list_ports
 from pymodbus.client import AsyncModbusSerialClient
 from pymodbus import ModbusException, ExceptionResponse, FramerType
 from pymodbus import pymodbus_apply_logging_config
+import math
 from PS103J2_table import *
 from conversion import *
 from modbus_functions import (
@@ -78,11 +79,13 @@ async def list_sensors(client):
 async def auto_test(client, num_slaves, filename):
     """Performs an automatic test, writing to coil 0 and reading input register 2 of each slave periodically."""
     log_data = []
+    # Pedir al usuario que ingrese el tiempo de intervalo y la duración total
     interval = float(input("Enter the interval time in seconds for the auto-test: "))
-    print("Performing auto test. Press 'q' at any time to stop.")
+    total_time = float(input("Enter the total duration in seconds for the auto-test: "))
 
-    # This event will be used to signal when to exit
-    stop_event = asyncio.Event()
+    # Calcular el número de ciclos de prueba usando math.ceil para redondear hacia arriba
+    num_cycles = math.ceil(total_time / interval)
+    print(f"Performing auto test for {num_cycles} cycles with an interval of {interval} seconds.")
 
     async def auto_test_cycle():
         """A single cycle of the auto-test, logging temperatures."""
@@ -103,24 +106,18 @@ async def auto_test(client, num_slaves, filename):
             for entry in log_data:
                 log_file.write(f"Slave {entry[0]}: Temperature = {entry[1]}\n")
 
-    # Run the auto-test cycle repeatedly until the user wants to stop
-    while not stop_event.is_set():
+    # Ejecutar el ciclo de auto-test `num_cycles` veces
+    for _ in range(num_cycles):
         await auto_test_cycle()
-        try:
-            # Await user input with a timeout equal to the interval
-            user_input = await asyncio.wait_for(asyncio.get_event_loop().run_in_executor(None, input, "\nPress 'q' to exit or any key to continue: "), interval)
-            if user_input.lower() == 'q':
-                print("Exiting auto-test. Waiting for the current cycle to complete...")
-                stop_event.set()
-        except asyncio.TimeoutError:
-            pass  # Timeout occurred, continue to next cycle
+        await asyncio.sleep(interval)  # Esperar el intervalo antes del siguiente ciclo
 
-    print("Auto-test stopped. Running temperature conversion...")
+    print("Auto-test completed. Running temperature conversion...")
     client.close()
 
     # Run convertTempString on the log file
     convertTempString(filename)
     print(f"Temperature conversion completed on file: {filename}")
+
 
 async def manual_modbus(client):
     """Allows manual use of Modbus commands."""
