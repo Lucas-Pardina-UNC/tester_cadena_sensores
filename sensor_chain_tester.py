@@ -3,7 +3,8 @@ import serial.tools.list_ports
 from pymodbus.client import AsyncModbusSerialClient
 from pymodbus import ModbusException, ExceptionResponse, FramerType
 from pymodbus import pymodbus_apply_logging_config
-
+from PS103J2_table import *
+from conversion import *
 from modbus_functions import (
     write_holding_register,
     read_holding_register,
@@ -74,7 +75,7 @@ async def list_sensors(client):
     print(f"\nNumber of slaves that responded: {num_slaves}")
     return num_slaves
 
-async def auto_test(client, num_slaves):
+async def auto_test(client, num_slaves, filename):
     """Performs an automatic test, writing to coil 0 and reading input register 2 of each slave periodically."""
     log_data = []
     interval = float(input("Enter the interval time in seconds for the auto-test: "))
@@ -114,13 +115,16 @@ async def auto_test(client, num_slaves):
         except asyncio.TimeoutError:
             pass  # Timeout occurred, continue to next cycle
 
-    print("Auto-test stopped. Disconnecting client...")
+    print("Auto-test stopped. Running temperature conversion...")
     client.close()
+
+    # Run convertTempString on the log file
+    convertTempString(filename)
+    print(f"Temperature conversion completed on file: {filename}")
 
 async def manual_modbus(client):
     """Allows manual use of Modbus commands."""
-
-
+    register_value = 0
 
     while True:
         print("\nModbus Manual Mode")
@@ -148,13 +152,17 @@ async def manual_modbus(client):
         elif choice == "4":
             slave_id = int(input("Enter slave ID: "))
             register_address = int(input("Enter register address: "))
-            await read_input_register(client, slave_id, register_address)
+            register_value = await read_input_register(client, slave_id, register_address)
+            if(register_value != None):
+                print(f"Obtained Input Register value: {register_value}")
+            else: 
+                print(f"Could not read input register {register_address} for slave {slave_id}")
         elif choice == "5":
             break
         else:
             print("Invalid option. Please select again.")
 
-async def run_client(com_port):
+async def run_client(com_port, filename):
     """Configures and runs the Modbus RTU client."""
     pymodbus_apply_logging_config("WARNING")
 
@@ -188,10 +196,6 @@ async def run_client(com_port):
         print(f"Could not connect to port {com_port}.")
         return
 
-    if not client.connected:
-        print("Client not connected. Attempting to reconnect...")
-        await client.connect()
-
     if client.connected:
         print("\nSelect mode:")
         print("1. Auto-test")
@@ -200,7 +204,7 @@ async def run_client(com_port):
         mode = input("Enter mode (1, 2, or 3): ")
 
         if mode == "1":
-            await auto_test(client, num_slaves)
+            await auto_test(client, num_slaves, filename)
         elif mode == "2":
             await manual_modbus(client)
         elif mode == "3":
@@ -224,9 +228,10 @@ def main():
         return
     
     selected_com = select_port(ports)
+    filename = "modbus_test_log"  # Filename for temperature conversion after auto-test
     print(f"Attempting to connect to {selected_com}...")
     
-    asyncio.run(run_client(selected_com))
+    asyncio.run(run_client(selected_com, filename))
 
 if __name__ == "__main__":
     main()
