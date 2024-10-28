@@ -27,7 +27,7 @@ def convertTempString(filename):
                     continue
                 
                 # Extraer timestamp
-                timestamp = line.split()[2].strip(":")
+                timestamp = line.split()[0].strip(":")
                 outf.write(f"{timestamp}")
                 temp.write(f"{timestamp}")
                 
@@ -49,8 +49,8 @@ def convertTempString(filename):
                     air_temp_C = 0
                 
                 # Escribir valores de temperatura en °C
-                outf.write(f"\t{air_temp_C:.2f}")
-                temp.write(f"\t{air_temp_C:.2f}")
+                outf.write(f" {air_temp_C:.2f}")
+                temp.write(f" {air_temp_C:.2f}")
                 
                 outf.write("\n")
                 temp.write("\n")

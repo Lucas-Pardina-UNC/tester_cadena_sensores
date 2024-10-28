@@ -4,6 +4,7 @@ from pymodbus.client import AsyncModbusSerialClient
 from pymodbus import ModbusException, ExceptionResponse, FramerType
 from pymodbus import pymodbus_apply_logging_config
 import math
+from datetime import datetime
 from PS103J2_table import *
 from conversion import *
 from modbus_functions import (
@@ -101,10 +102,13 @@ async def auto_test(client, num_slaves, filename):
             except ModbusException:
                 continue
 
+        # Obtener fecha/hora actual
+        current_timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+
         # Log data to file
         with open("modbus_test_log.txt", "w") as log_file:
             for entry in log_data:
-                log_file.write(f"Slave {entry[0]}: Temperature = {entry[1]}\n")
+                log_file.write(f"{current_timestamp}_Slave_{entry[0]} Temperature = {entry[1]}\n")
 
     # Ejecutar el ciclo de auto-test `num_cycles` veces
     for _ in range(num_cycles):
@@ -192,6 +196,13 @@ async def run_client(com_port, filename):
     else:
         print(f"Could not connect to port {com_port}.")
         return
+
+    if not client.connected:
+        await client.connect()
+        if client.connected:
+            print("Reconnection success after slave detection\n")
+        else:
+            print("Reconnection failed after slave detection\n")
 
     if client.connected:
         print("\nSelect mode:")
