@@ -18,3 +18,6 @@ Requerimientos Funcionales:
         El programa debe permitir modificar la dirección del sensor o la velocidad de comunicación Modbus a través de los comandos correspondientes (Write Holding Register en las direcciones 1 y 2).
         El programa debe verificar y confirmar que las modificaciones se han realizado correctamente mediante una lectura de verificación posterior.
 
+    Multiples Conexiones
+
+        Se debe poder probar dos módulos de sensores a la vez
