@@ -1,20 +1,13 @@
 import asyncio
 import serial.tools.list_ports
 from pymodbus.client import AsyncModbusSerialClient
-from pymodbus import ModbusException, ExceptionResponse, FramerType
+from pymodbus import FramerType
 from pymodbus import pymodbus_apply_logging_config
-import math
-from datetime import datetime
 from PS103J2_table import *
 from conversion import *
 from auto_test import * 
 from manual_modbus import *
-from modbus_functions import (
-    write_holding_register,
-    read_holding_register,
-    write_coil,
-    read_input_register,
-)
+from get_set_available_slaves import *
 
 def list_ports():
     """Lists all available COM ports on the system."""
@@ -48,57 +41,6 @@ def select_port(ports):
         print("Please enter a valid index number or the exact port name (e.g., COM11).")
 
 
-async def list_sensors(client):
-    """Reads input register 0 of each slave up to a specified number and displays all detected sensors."""
-    while True:
-        try:
-            num_slaves_to_test = int(input("Enter the number of slaves you want to test (1-255): "))
-            if 1 <= num_slaves_to_test <= 255:
-                break
-            else:
-                print("Please enter a number between 1 and 255.")
-        except ValueError:
-            print("Invalid input. Please enter an integer between 1 and 255.")
-
-    responsive_slaves = []
-
-    for slave_id in range(1, num_slaves_to_test + 1):
-        # Check if client is connected; if not, attempt to reconnect
-        if not client.connected:
-            print(f"Client disconnected. Attempting to reconnect before querying slave {slave_id}...")
-            await client.connect()
-            if client.connected:
-                print("Reconnection successful.")
-            else:
-                print("Failed to reconnect. Exiting sensor detection.")
-                break
-
-        # Attempt to read the input register
-        read_value = await read_input_register(client, slave_id, input_register_address=0)
-        
-        if read_value is not None:
-            responsive_slaves.append(slave_id)  # Track the responsive slave ID
-            sensor_type = ""
-            if read_value in [900, 999]:
-                sensor_type = "Temperature sensor"
-            elif read_value == 200:
-                sensor_type = "Air sensor"
-            elif read_value == 100:
-                sensor_type = "Energy sensor"
-            elif read_value == 1000:
-                sensor_type = "Probe"
-            else:
-                sensor_type = "Unknown sensor ID"
-
-            print(f"Slave {slave_id}: Sensor ID = {read_value}, Sensor type = {sensor_type}")
-        else:
-            print(f"Slave {slave_id} did not respond.")
-
-    print("\nDetected sensors:")
-    print(f"Responsive slaves: {responsive_slaves}")
-    return responsive_slaves
-
-
 async def run_client(com_port, filename):
     """Configures and runs the Modbus RTU client."""
     pymodbus_apply_logging_config("WARNING")
@@ -119,56 +61,44 @@ async def run_client(com_port, filename):
     if client.connected:
         print(f"Successfully connected on port {com_port}.")
 
-        # Ask user whether to detect slaves or input manually
-        detect_slaves = input("Do you want to detect the number of slaves? (y/n): ").strip().lower()
+                # Check for available_slaves.txt and its validity
+        responsive_slaves = []
+        valid_file = False
 
-        if detect_slaves == 'y':
-            responsive_slaves = await list_sensors(client)
-        elif detect_slaves == 'n':
-            num_slaves = int(input("Enter the number of slaves: "))
-            responsive_slaves = []
+        valid_file = file_is_valid()
+        responsive_slaves = get_responsive_slaves()
 
-            print("Choose how to enter the IDs of each active slave:")
-            print("1. Enter each ID one by one.")
-            print("2. Enter a range of IDs (e.g., '2-14' to select IDs from 2 to 14).")
-            input_method = input("Enter '1' for individual IDs or '2' for a range: ")
+        # Provide options based on file validity
+        if valid_file:
+            print("Available options:")
+            print("1. Use the information from available_slaves.txt")
+            print("2. Detect the available slaves (this will modify the file)")
+            print("3. Input the available slaves manually (this will also modify the file)")
+            option = input("Select an option (1, 2, or 3): ")
 
-            if input_method == '1':
-                # Option 1: Enter each slave ID one by one
-                print("Enter the IDs of each active slave (1-255). Press Enter after each ID.")
-                for _ in range(num_slaves):
-                    while True:
-                        try:
-                            slave_id = int(input("Slave ID: "))
-                            if 1 <= slave_id <= 255:
-                                responsive_slaves.append(slave_id)
-                                break
-                            else:
-                                print("Please enter a valid slave ID between 1 and 255.")
-                        except ValueError:
-                            print("Invalid input. Please enter an integer.")
-
-            elif input_method == '2':
-                # Option 2: Enter a range of slave IDs
-                print("Enter the range of IDs for active slaves in the format 'start-end' (e.g., '2-14').")
-                while True:
-                    try:
-                        range_input = input("Enter slave ID range: ")
-                        start_id, end_id = map(int, range_input.split('-'))
-                        
-                        # Validate range input
-                        if 1 <= start_id <= 255 and 1 <= end_id <= 255 and start_id <= end_id:
-                            responsive_slaves.extend(range(start_id, end_id + 1))
-                            break
-                        else:
-                            print("Please enter a valid range between 1 and 255, with start ID less than or equal to end ID.")
-                    except ValueError:
-                        print("Invalid input. Please enter the range in the format 'start-end'.")
-
+            if option == '1':
+                pass  # Use the loaded responsive_slaves as is
+            elif option == '2':
+                responsive_slaves = await list_sensors(client)
+            elif option == '3':
+                await input_manual_slaves(responsive_slaves)
             else:
                 print("Invalid option selected. Exiting.")
                 return
 
+        else:
+            print("Since no valid data was found, only these options are available:")
+            print("1. Detect the available slaves (this will modify the file)")
+            print("2. Input the available slaves manually (this will also modify the file)")
+            option = input("Select an option (1 or 2): ")
+
+            if option == '1':
+                responsive_slaves = await list_sensors(client)
+            elif option == '2':
+                await input_manual_slaves(responsive_slaves)
+            else:
+                print("Invalid option selected. Exiting.")
+                return
 
     else:
         print(f"Could not connect to port {com_port}.")

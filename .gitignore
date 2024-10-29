@@ -3,3 +3,4 @@ __pycache__
 .benv
 *.tmp
 temp_string.txt
+available_slaves.txt
