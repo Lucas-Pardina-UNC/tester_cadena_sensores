@@ -7,6 +7,8 @@ import math
 from datetime import datetime
 from PS103J2_table import *
 from conversion import *
+from auto_test import * 
+from manual_modbus import *
 from modbus_functions import (
     write_holding_register,
     read_holding_register,
@@ -28,7 +30,11 @@ def select_port(ports):
         print(f"{i + 1}: {port.device} - {port.description}")
     
     while True:
-        selection = input("\nSelect the port number you want to connect to (index or port number, e.g., COM11): ")
+        selection = input("\nSelect the port number you want to connect to (index or port number, e.g., COM11), or 'q' to quit: ")
+        
+        if selection.lower() == 'q':
+            print("Exiting the program.")
+            exit()  # Termina el programa si se ingresa 'q'
         
         try:
             index = int(selection) - 1
@@ -41,16 +47,37 @@ def select_port(ports):
         
         print("Please enter a valid index number or the exact port name (e.g., COM11).")
 
-async def list_sensors(client):
-    """Reads input register 0 of each slave until one does not respond and displays all detected sensors."""
-    num_slaves = 0
-    slave_id = 1
 
+async def list_sensors(client):
+    """Reads input register 0 of each slave up to a specified number and displays all detected sensors."""
     while True:
+        try:
+            num_slaves_to_test = int(input("Enter the number of slaves you want to test (1-255): "))
+            if 1 <= num_slaves_to_test <= 255:
+                break
+            else:
+                print("Please enter a number between 1 and 255.")
+        except ValueError:
+            print("Invalid input. Please enter an integer between 1 and 255.")
+
+    responsive_slaves = []
+
+    for slave_id in range(1, num_slaves_to_test + 1):
+        # Check if client is connected; if not, attempt to reconnect
+        if not client.connected:
+            print(f"Client disconnected. Attempting to reconnect before querying slave {slave_id}...")
+            await client.connect()
+            if client.connected:
+                print("Reconnection successful.")
+            else:
+                print("Failed to reconnect. Exiting sensor detection.")
+                break
+
+        # Attempt to read the input register
         read_value = await read_input_register(client, slave_id, input_register_address=0)
         
         if read_value is not None:
-            num_slaves += 1
+            responsive_slaves.append(slave_id)  # Track the responsive slave ID
             sensor_type = ""
             if read_value in [900, 999]:
                 sensor_type = "Temperature sensor"
@@ -64,104 +91,13 @@ async def list_sensors(client):
                 sensor_type = "Unknown sensor ID"
 
             print(f"Slave {slave_id}: Sensor ID = {read_value}, Sensor type = {sensor_type}")
-            slave_id += 1           
         else:
-            print(f"Slave {slave_id} did not respond. Stopping the search.")
-            try:
-                client.close()
-            except Exception as e:
-                print(f"Error closing client: {e}")
-            break
+            print(f"Slave {slave_id} did not respond.")
 
     print("\nDetected sensors:")
-    print(f"\nNumber of slaves that responded: {num_slaves}")
-    return num_slaves
+    print(f"Responsive slaves: {responsive_slaves}")
+    return responsive_slaves
 
-async def auto_test(client, num_slaves, filename):
-    """Performs an automatic test, writing to coil 0 and reading input register 2 of each slave periodically."""
-    log_data = []
-    # Pedir al usuario que ingrese el tiempo de intervalo y la duración total
-    interval = float(input("Enter the interval time in seconds for the auto-test: "))
-    total_time = float(input("Enter the total duration in seconds for the auto-test: "))
-
-    # Calcular el número de ciclos de prueba usando math.ceil para redondear hacia arriba
-    num_cycles = math.ceil(total_time / interval)
-    print(f"Performing auto test for {num_cycles} cycles with an interval of {interval} seconds.")
-
-    async def auto_test_cycle():
-        """A single cycle of the auto-test, logging temperatures."""
-        nonlocal log_data
-        for slave_id in range(1, num_slaves + 1):
-            try:
-                write_response = await client.write_coil(0, True, slave=slave_id)
-                if not write_response.isError():
-                    read_response = await client.read_input_registers(2, count=1, slave=slave_id)
-                    if not read_response.isError():
-                        temperature = read_response.registers[0]
-                        log_data.append((slave_id, temperature))
-            except ModbusException:
-                continue
-
-        # Obtener fecha/hora actual
-        current_timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-
-        # Log data to file
-        with open("modbus_test_log.txt", "w") as log_file:
-            for entry in log_data:
-                log_file.write(f"{current_timestamp}_Slave_{entry[0]} Temperature = {entry[1]}\n")
-
-    # Ejecutar el ciclo de auto-test `num_cycles` veces
-    for _ in range(num_cycles):
-        await auto_test_cycle()
-        await asyncio.sleep(interval)  # Esperar el intervalo antes del siguiente ciclo
-
-    print("Auto-test completed. Running temperature conversion...")
-    client.close()
-
-    # Run convertTempString on the log file
-    convertTempString(filename)
-    print(f"Temperature conversion completed on file: {filename}")
-
-
-async def manual_modbus(client):
-    """Allows manual use of Modbus commands."""
-    register_value = 0
-
-    while True:
-        print("\nModbus Manual Mode")
-        print("1. Write Holding Register")
-        print("2. Read Holding Register")
-        print("3. Write Coil")
-        print("4. Read Input Register")
-        print("5. Exit")
-        choice = input("Select an option: ")
-
-        if choice == "1":
-            slave_id = int(input("Enter slave ID: "))
-            register_address = int(input("Enter register address: "))
-            value = int(input("Enter value to write: "))
-            await write_holding_register(client, slave_id, register_address, value)
-        elif choice == "2":
-            slave_id = int(input("Enter slave ID: "))
-            register_address = int(input("Enter register address: "))
-            await read_holding_register(client, slave_id, register_address)
-        elif choice == "3":
-            slave_id = int(input("Enter slave ID: "))
-            coil_address = int(input("Enter coil address: "))
-            value = bool(int(input("Enter value (0 or 1): ")))
-            await write_coil(client, slave_id, coil_address, value)
-        elif choice == "4":
-            slave_id = int(input("Enter slave ID: "))
-            register_address = int(input("Enter register address: "))
-            register_value = await read_input_register(client, slave_id, register_address)
-            if(register_value != None):
-                print(f"Obtained Input Register value: {register_value}")
-            else: 
-                print(f"Could not read input register {register_address} for slave {slave_id}")
-        elif choice == "5":
-            break
-        else:
-            print("Invalid option. Please select again.")
 
 async def run_client(com_port, filename):
     """Configures and runs the Modbus RTU client."""
@@ -187,12 +123,53 @@ async def run_client(com_port, filename):
         detect_slaves = input("Do you want to detect the number of slaves? (y/n): ").strip().lower()
 
         if detect_slaves == 'y':
-            num_slaves = await list_sensors(client)
+            responsive_slaves = await list_sensors(client)
         elif detect_slaves == 'n':
             num_slaves = int(input("Enter the number of slaves: "))
-        else:
-            print("Invalid option. Exiting.")
-            return
+            responsive_slaves = []
+
+            print("Choose how to enter the IDs of each active slave:")
+            print("1. Enter each ID one by one.")
+            print("2. Enter a range of IDs (e.g., '2-14' to select IDs from 2 to 14).")
+            input_method = input("Enter '1' for individual IDs or '2' for a range: ")
+
+            if input_method == '1':
+                # Option 1: Enter each slave ID one by one
+                print("Enter the IDs of each active slave (1-255). Press Enter after each ID.")
+                for _ in range(num_slaves):
+                    while True:
+                        try:
+                            slave_id = int(input("Slave ID: "))
+                            if 1 <= slave_id <= 255:
+                                responsive_slaves.append(slave_id)
+                                break
+                            else:
+                                print("Please enter a valid slave ID between 1 and 255.")
+                        except ValueError:
+                            print("Invalid input. Please enter an integer.")
+
+            elif input_method == '2':
+                # Option 2: Enter a range of slave IDs
+                print("Enter the range of IDs for active slaves in the format 'start-end' (e.g., '2-14').")
+                while True:
+                    try:
+                        range_input = input("Enter slave ID range: ")
+                        start_id, end_id = map(int, range_input.split('-'))
+                        
+                        # Validate range input
+                        if 1 <= start_id <= 255 and 1 <= end_id <= 255 and start_id <= end_id:
+                            responsive_slaves.extend(range(start_id, end_id + 1))
+                            break
+                        else:
+                            print("Please enter a valid range between 1 and 255, with start ID less than or equal to end ID.")
+                    except ValueError:
+                        print("Invalid input. Please enter the range in the format 'start-end'.")
+
+            else:
+                print("Invalid option selected. Exiting.")
+                return
+
+
     else:
         print(f"Could not connect to port {com_port}.")
         return
@@ -208,14 +185,17 @@ async def run_client(com_port, filename):
         print("\nSelect mode:")
         print("1. Auto-test")
         print("2. Modbus Manual")
-        print("3. Exit")
-        mode = input("Enter mode (1, 2, or 3): ")
+        print("3. Delete Log Files")  # Nueva opción para eliminar archivos de registro
+        print("4. Exit")
+        mode = input("Enter mode (1, 2, 3, or 4): ")
 
         if mode == "1":
-            await auto_test(client, num_slaves, filename)
+            await auto_test(client, responsive_slaves, filename)
         elif mode == "2":
             await manual_modbus(client)
-        elif mode == "3":
+        elif mode == "3":  # Opción para eliminar archivos de registro
+            delete_log_files()
+        elif mode == "4":
             print("Exiting.")
         else:
             print("Invalid option. Exiting.")
@@ -243,3 +223,16 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+def delete_log_files():
+    """Elimina archivos de registro especificados."""
+    log_files = ["temp_string.tmp", "temp_string.txt", "modbus_test_log.txt", "convertion_log.txt"]
+    
+    for file in log_files:
+        try:
+            os.remove(file)
+            print(f"Deleted file: {file}")
+        except FileNotFoundError:
+            print(f"File not found: {file}")
+        except Exception as e:
+            print(f"Error deleting file {file}: {e}")
