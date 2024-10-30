@@ -8,6 +8,7 @@ from conversion import *
 from auto_test import * 
 from manual_modbus import *
 from get_set_available_slaves import *
+import pdb;
 
 def list_ports():
     """Lists all available COM ports on the system."""
@@ -79,7 +80,7 @@ async def run_client(com_port, filename):
             if option == '1':
                 pass  # Use the loaded responsive_slaves as is
             elif option == '2':
-                responsive_slaves = await list_sensors(client)
+                responsive_slaves = await list_sensors(client, com_port)
             elif option == '3':
                 await input_manual_slaves(responsive_slaves)
             else:
@@ -93,7 +94,7 @@ async def run_client(com_port, filename):
             option = input("Select an option (1 or 2): ")
 
             if option == '1':
-                responsive_slaves = await list_sensors(client)
+                responsive_slaves = await list_sensors(client, com_port)
             elif option == '2':
                 await input_manual_slaves(responsive_slaves)
             else:
@@ -103,13 +104,6 @@ async def run_client(com_port, filename):
     else:
         print(f"Could not connect to port {com_port}.")
         return
-
-    if not client.connected:
-        await client.connect()
-        if client.connected:
-            print("Reconnection success after slave detection\n")
-        else:
-            print("Reconnection failed after slave detection\n")
 
     if client.connected:
         print("\nSelect mode:")
@@ -130,7 +124,7 @@ async def run_client(com_port, filename):
         else:
             print("Invalid option. Exiting.")
     else:
-        print("Reconnection failed. Exiting.")
+        print("Failed to load main menu, the client is not connected. Exiting.")
 
     if client.connected:
         print("Closing the connection...")
@@ -150,6 +144,8 @@ def main():
     print(f"Attempting to connect to {selected_com}...")
     
     asyncio.run(run_client(selected_com, filename))
+
+
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,9 @@
 from modbus_functions import read_input_register
 import os
+import serial
+from serial.tools import list_ports
 
-async def list_sensors(client):
+async def list_sensors(client, com_port):
     """Reads input register 0 of each slave up to a specified number and writes detected sensors to a file."""
     while True:
         try:
@@ -16,16 +18,6 @@ async def list_sensors(client):
     responsive_slaves = []
 
     for slave_id in range(1, num_slaves_to_test + 1):
-        # Check if client is connected; if not, attempt to reconnect
-        if not client.connected:
-            print(f"Client disconnected. Attempting to reconnect before querying slave {slave_id}...")
-            await client.connect()
-            if client.connected:
-                print("Reconnection successful.")
-            else:
-                print("Failed to reconnect. Exiting sensor detection.")
-                break
-
         # Attempt to read the input register
         read_value = await read_input_register(client, slave_id, input_register_address=0)
 
