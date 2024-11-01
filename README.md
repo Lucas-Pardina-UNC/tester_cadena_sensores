@@ -8,3 +8,15 @@ git remote add origin https://github.com/Lucas-Pardina-UNC/tester_cadena_sensore
 git branch -M main
 git pull origin main
 ```
+
+## Configurar
+
+```
+python setup.py
+```
+
+## Correr programa
+
+```
+python sensor_chain_tester.py
+```
