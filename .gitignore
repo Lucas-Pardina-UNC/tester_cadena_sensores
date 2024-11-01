@@ -1,6 +1,6 @@
 modbus_test_log.txt
 __pycache__
-.benv
+.venv
 *.tmp
 temp_string.txt
 available_slaves.txt
