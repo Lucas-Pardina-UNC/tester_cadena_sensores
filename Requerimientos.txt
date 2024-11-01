@@ -21,3 +21,7 @@ Requerimientos Funcionales:
     Multiples Conexiones
 
         Se debe poder probar dos módulos de sensores a la vez
+
+    Salida excel
+
+        Se deben poder visualizar los datos de las múltiples cadenas de temperatura en sus correspondientes columas en una planilla excel
