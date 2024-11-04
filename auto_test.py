@@ -6,11 +6,15 @@ from conversion import *
 from modbus_functions import * 
 import time
 import re
-import math
+#import math
 import asyncio
 from datetime import datetime
 from pymodbus.exceptions import ModbusException
+import openpyxl  #pip install openpyxl
+from openpyxl import Workbook
+import os
 from conversion import adc_to_temperature
+from calc_sheets import *
 
 async def listen_for_quit():
     """
@@ -112,7 +116,7 @@ async def auto_test(client, responsive_slaves, filename):
         return
 
     print("Auto-test completed.")
-    client.close()
+    #client.close()
 
 
 async def auto_test_cycle(client, responsive_slaves, log_data):
@@ -137,6 +141,10 @@ async def auto_test_cycle(client, responsive_slaves, log_data):
 
     # Log data to file
     log_to_file(log_data, current_timestamp)
+    
+    # Log to excel
+    log_to_excel(log_data, current_timestamp)
+    #row = row + 1
 
 
 def log_to_file(log_data, timestamp=None):
@@ -147,3 +155,17 @@ def log_to_file(log_data, timestamp=None):
                 log_file.write(f"{timestamp} | Slave {entry[0]} | ADC_Value = {entry[1]} | Temperature = {entry[2]}\n")
             else:
                 log_file.write(f"Slave {entry[0]} | ADC_Value = {entry[1]} | Temperature = {entry[2]}\n")
+
+
+def delete_log_files():
+    """Elimina archivos de registro especificados."""
+    log_files = ["temp_string.tmp", "temp_string.txt", "modbus_test_log.txt", "modbus_test_log.xlsx", "convertion_log.txt"]
+    
+    for file in log_files:
+        try:
+            os.remove(file)
+            print(f"Deleted file: {file}")
+        except FileNotFoundError:
+            print(f"File not found: {file}")
+        except Exception as e:
+            print(f"Error deleting file {file}: {e}")

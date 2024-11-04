@@ -8,6 +8,7 @@ from conversion import *
 from auto_test import * 
 from manual_modbus import *
 from get_set_available_slaves import *
+from calc_sheets import *
 import pdb;
 
 def list_ports():
@@ -106,25 +107,37 @@ async def run_client(com_port, filename):
         return
 
     if client.connected:
-        print("\nSelect mode:")
-        print("1. Auto-test")
-        print("2. Modbus Manual")
-        print("3. Delete Log Files")  # Nueva opción para eliminar archivos de registro
-        print("4. Exit")
-        mode = input("Enter mode (1, 2, 3, or 4): ")
+        test_continue = "s"
+        while test_continue != "n":
+            print("\nSelect mode:")
+            print("1. Auto-test")
+            print("2. Modbus Manual")
+            print("3. Delete Log Files")  # Nueva opción para eliminar archivos de registro
+            print("4. Exit")
+            mode = input("Enter mode (1, 2, 3, or 4): ")
 
-        if mode == "1":
-            await auto_test(client, responsive_slaves, filename)
-        elif mode == "2":
-            await manual_modbus(client)
-        elif mode == "3":  # Opción para eliminar archivos de registro
-            delete_log_files()
-        elif mode == "4":
-            print("Exiting.")
-        else:
-            print("Invalid option. Exiting.")
+            if mode == "1":
+                await auto_test(client, responsive_slaves, filename)
+            elif mode == "2":
+                await manual_modbus(client)
+            elif mode == "3":  # Opción para eliminar archivos de registro
+                delete_log_files()
+            elif mode == "4":
+                print("Exiting.")
+            else:
+                print("Invalid option. Exiting.")
+
+            while True:
+                test_continue = input("Would you like to continue testing? (s/n): ").strip().lower()  # Get user input and normalize it
+                if test_continue in ('s', 'n'):  # Check if the input is either 's' or 'n'
+                    break
+                else:
+                    print("Invalid input. Please enter 's' for yes or 'n' for no.")  # Prompt for valid input
+            
     else:
         print("Failed to load main menu, the client is not connected. Exiting.")
+
+
 
     if client.connected:
         print("Closing the connection...")
@@ -145,20 +158,5 @@ def main():
     
     asyncio.run(run_client(selected_com, filename))
 
-
-
 if __name__ == "__main__":
     main()
-
-def delete_log_files():
-    """Elimina archivos de registro especificados."""
-    log_files = ["temp_string.tmp", "temp_string.txt", "modbus_test_log.txt", "convertion_log.txt"]
-    
-    for file in log_files:
-        try:
-            os.remove(file)
-            print(f"Deleted file: {file}")
-        except FileNotFoundError:
-            print(f"File not found: {file}")
-        except Exception as e:
-            print(f"Error deleting file {file}: {e}")
