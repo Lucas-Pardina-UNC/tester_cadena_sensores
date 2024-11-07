@@ -1,9 +1,7 @@
 from modbus_functions import read_input_register
 import os
-import serial
-from serial.tools import list_ports
 
-async def list_sensors(client, com_port):
+async def list_sensors(client, filename = "available_slaves.txt"):
     """Reads input register 0 of each slave up to a specified number and writes detected sensors to a file."""
     while True:
         try:
@@ -43,14 +41,14 @@ async def list_sensors(client, com_port):
     print(f"Responsive slaves: {responsive_slaves}")
     
     # Write responsive slaves to a file
-    with open("available_slaves.txt", "w") as f:
+    with open(filename, "w") as f:
         for slave in responsive_slaves:
             f.write(f"{slave}\n")
-    print("Responsive slave IDs have been written to available_slaves.txt.")
+    print(f"Responsive slave IDs have been written to {filename}.")
     
     return responsive_slaves
 
-async def input_manual_slaves(responsive_slaves):
+async def input_manual_slaves(responsive_slaves, filename = "available_slaves.txt"):
     """Prompts the user to input slave IDs manually."""
     print("Choose how to enter the IDs of each active slave:")
     print("1. Enter each ID one by one.")
@@ -70,6 +68,7 @@ async def input_manual_slaves(responsive_slaves):
                 break  # Exit loop on empty input
 
     elif input_method == '2':
+        responsive_slaves = []
         print("Enter the range of IDs for active slaves in the format 'start-end' (e.g., '2-14').")
         while True:
             try:
@@ -86,10 +85,10 @@ async def input_manual_slaves(responsive_slaves):
                 print("Invalid input. Please enter the range in the format 'start-end'.")
 
     # Save responsive_slaves to the available_slaves.txt file
-    with open("available_slaves.txt", "w") as f:
+    with open(filename, "w") as f:
         for slave in responsive_slaves:
             f.write(f"{slave}\n")
-    print("Responsive slave IDs have been written to available_slaves.txt.")
+    print(f"Responsive slave IDs have been written to {filename}.")
 
 def file_is_valid(filename="available_slaves.txt"):
     """Check if the file exists and contains valid slave IDs."""

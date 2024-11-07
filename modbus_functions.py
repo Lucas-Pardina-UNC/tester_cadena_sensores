@@ -1,5 +1,3 @@
-import asyncio
-from pymodbus.client import AsyncModbusSerialClient
 from pymodbus import ModbusException
 
 async def write_holding_register(client, slave_id, register_address, value):

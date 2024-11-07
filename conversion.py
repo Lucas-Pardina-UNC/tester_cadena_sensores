@@ -1,5 +1,3 @@
-import os
-from collections import deque
 from PS103J2_table import *
 
 # Función de conversión de ADC a temperatura
