@@ -1,8 +1,6 @@
-""" import asyncio """
+from typing import List, Optional
+from serial.tools.list_ports_common import ListPortInfo
 import serial.tools.list_ports
-""" from pymodbus.client import AsyncModbusSerialClient
-from pymodbus import FramerType """
-from pymodbus import pymodbus_apply_logging_config
 from PS103J2_table import *
 from conversion import *
 from auto_test import * 
@@ -11,27 +9,25 @@ from get_set_available_slaves import *
 from calc_sheets import *
 from multiple_chains import *
 from validate_inputs import *
-import pdb;
 
-def list_ports():
-    """Lists all available COM ports on the system."""
+def list_ports() -> Optional[List[ListPortInfo]]:
+    """Muestra todos los puertos COM disponibles en el sistema."""
     ports = serial.tools.list_ports.comports()
     if not ports:
-        print("No available ports found.")
+        print("No se encontraron puertos disponibles.")
     return ports
 
-def select_port(ports):
-    """Allows the user to select a COM port by index or number."""
-    print("\nAvailable ports:")
+def select_port(ports: List[ListPortInfo]) -> str:
+    """Permite al usuario seleccionar un puerto COM por índice o número."""
+    print("\nPuertos disponibles:")
     for i, port in enumerate(ports):
         print(f"{i + 1}: {port.device} - {port.description}")
     
     while True:
-        selection = input("\nSelect the port number you want to connect to (index or port number, e.g., COM11), or 'q' to quit: ")
-        #selection = validate_list_options(ports, "\nSelect the port number you want to connect to (index or port number, e.g., COM11), or 'q' to quit: ")
-        print("") # end line
+        selection = input("\nSeleccione el número de puerto al que desea conectarse (índice o nombre de puerto, ej., COM11), o 'q' para salir: ")
+        print("")  # línea en blanco
         if selection.lower() == 'q':
-            print("Exiting the program.")
+            print("Saliendo del programa.")
             exit()  # Termina el programa si se ingresa 'q'
         
         try:
@@ -43,17 +39,17 @@ def select_port(ports):
                 if port.device == selection.upper():
                     return port.device
         
-        print("Please enter a valid index number or the exact port name (e.g., COM11).")
+        print("Por favor ingrese un número de índice válido o el nombre exacto del puerto (ej., COM11).")
 
 def main():
     while True:
-        print("EML sensor tester - Select Option:")
-        print("1. Start Test Config")
-        print("2. Delete Log Files")
-        print("3. Exit")
+        print("Probador de sensor EML - Seleccione una opción:")
+        print("1. Iniciar configuración de las cadenas de sensores")
+        print("2. Eliminar archivos log")
+        print("3. Salir")
 
-        menu_option = validate_three_options("Input selected option ('1', '2' or '3'): ")
-        print("") # end line
+        menu_option = validate_three_options("Ingrese la opción seleccionada ('1', '2' o '3'): ")
+        print("")  # línea en blanco
         
         if menu_option == "1":
             multiple_chain()
@@ -61,7 +57,7 @@ def main():
         elif menu_option == "2":  # Opción para eliminar archivos de registro
             delete_log_files()
         elif menu_option == "3":
-            print("Exiting.")
+            print("Saliendo.")
             break
 
 if __name__ == "__main__":

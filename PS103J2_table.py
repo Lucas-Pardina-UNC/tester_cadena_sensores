@@ -1,5 +1,6 @@
+from typing import List
 
-def closest(array, value):
+def closest(array: List[float], value: float) -> int:
     aux = []
     for element in array:
         aux.append(abs(value-element))

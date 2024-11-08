@@ -3,8 +3,19 @@ import openpyxl  #pip install openpyxl
 from openpyxl import load_workbook
 from openpyxl.styles import Alignment
 from openpyxl.utils.exceptions import InvalidFileException
+from typing import List, Tuple, Optional
 
-def center_and_adjust_columns(sheet):
+def center_and_adjust_columns(sheet: openpyxl.worksheet.worksheet.Worksheet) -> None:
+    """
+    Centers the content of all cells that have data and adjusts the column widths
+    to fit the content in the specified sheet.
+    
+    Parameters:
+        sheet (openpyxl.worksheet.worksheet.Worksheet): The Excel worksheet to modify.
+    
+    Returns:
+        None
+    """
     # Center-align content of all cells that have data
     for row in sheet.iter_rows():
         for cell in row:
@@ -24,32 +35,53 @@ def center_and_adjust_columns(sheet):
         adjusted_width = max_length + 2
         sheet.column_dimensions[column_letter].width = adjusted_width
 
-def save_workbook_safely(file_path, workbook):
+def save_workbook_safely(file_path: str, workbook: openpyxl.workbook.workbook.Workbook) -> bool:
+    """
+    Attempts to save the workbook to the specified file path, handling errors like 
+    permission issues or invalid file formats.
+    
+    Parameters:
+        file_path (str): The path to save the workbook to.
+        workbook (openpyxl.workbook.workbook.Workbook): The workbook to save.
+    
+    Returns:
+        bool: True if the file was saved successfully, False otherwise.
+    """
     while True:
         try:
             workbook.save(file_path)
-            #print(f"File saved successfully to '{file_path}'.")
+            #print(f"Archivo guardado exitosamente en '{file_path}'.")
             return True  # Return True on success
         except PermissionError:
-            print(f"Permission denied: Close the Excel file '{file_path}' and try again.")
-            input("Press Enter when the file is closed...")  # Wait for user confirmation
+            print(f"Permiso denegado: Cierra el archivo de Excel '{file_path}' e intenta nuevamente.")
+            input("Presiona Enter cuando el archivo esté cerrado...")  # Wait for user confirmation
         except InvalidFileException as e:
-            print(f"Error saving file: {e}")
+            print(f"Error al guardar el archivo: {e}")
             return False  # Return False on error
-        
-def log_to_excel(log_data, timestamp=None, chain_id=0, filename="modbus_test_log.xlsx"):
-    """Logs data to an Excel file with columns for timestamp, Slave ID, ADC label, ADC value, and temperature,
-       starting in a specified column set based on chain_id."""
+
+def log_to_excel(log_data: List[Tuple], timestamp: Optional[str] = None, chain_id: int = 0, filename: str = "modbus_test_log.xlsx") -> None:
+    """
+    Logs data to an Excel file with columns for timestamp, Slave ID, ADC value, and temperature,
+    starting in a specified column set based on chain_id.
     
+    Parameters:
+        log_data (List[Tuple]): A list of tuples where each tuple contains the data to log (Slave ID, ADC value, Temperature).
+        timestamp (Optional[str]): The timestamp to log. Defaults to None.
+        chain_id (int): An integer that determines where the data will be logged. Defaults to 0.
+        filename (str): The name of the Excel file to log the data to. Defaults to "modbus_test_log.xlsx".
+    
+    Returns:
+        None
+    """
     # Check if the file exists
     if os.path.exists(filename):
         # If the file exists, open it
         workbook = openpyxl.load_workbook(filename)
-        #print(f"Opened existing file: {filename}")
+        #print(f"Archivo existente abierto: {filename}")
     else:
         # If the file does not exist, create a new workbook and add a sheet
         workbook = openpyxl.Workbook()
-        print(f"Created new file: {filename}")
+        print(f"Archivo nuevo creado: {filename}")
         # Select the active sheet
         sheet = workbook.active
         # Rename the active sheet
@@ -89,4 +121,4 @@ def log_to_excel(log_data, timestamp=None, chain_id=0, filename="modbus_test_log
 
     # Save the workbook
     save_workbook_safely(filename, workbook)
-    #print(f"Data logged to {filename} in columns starting at {chr(64 + start_column)}")
+    #print(f"Datos registrados en {filename} en las columnas comenzando en {chr(64 + start_column)}")

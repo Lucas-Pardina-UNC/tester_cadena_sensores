@@ -1,34 +1,35 @@
 import sys
 import subprocess
+from typing import Tuple
 
 # Required Python version
-REQUIRED_PYTHON_VERSION = (3, 12, 2)
+REQUIRED_PYTHON_VERSION: Tuple[int, int, int] = (3, 12, 2)
 
-def check_python_version():
-    """Checks if the current Python version meets the minimum requirement."""
+def check_python_version() -> None:
+    """Verifica si la versión actual de Python cumple con el requisito mínimo."""
     if sys.version_info < REQUIRED_PYTHON_VERSION:
-        print(f"Python {REQUIRED_PYTHON_VERSION[0]}.{REQUIRED_PYTHON_VERSION[1]}.{REQUIRED_PYTHON_VERSION[2]} or newer is required.")
-        print("Please install the required version of Python and try again.")
+        print(f"Se requiere Python {REQUIRED_PYTHON_VERSION[0]}.{REQUIRED_PYTHON_VERSION[1]}.{REQUIRED_PYTHON_VERSION[2]} o una versión más reciente.")
+        print("Por favor, instale la versión requerida de Python e intente de nuevo.")
         sys.exit(1)
 
-def install_dependencies():
-    """Installs required packages listed in requirements.txt."""
+def install_dependencies() -> None:
+    """Instala los paquetes requeridos que están listados en requirements.txt."""
     try:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
     except subprocess.CalledProcessError:
-        print("Failed to install dependencies. Ensure that pip is installed and try again.")
+        print("Error al instalar las dependencias. Asegúrese de que pip esté instalado e intente nuevamente.")
         sys.exit(1)
 
-def main():
-    # Step 1: Check Python version
+def main() -> None:
+    # Paso 1: Verificar la versión de Python
     check_python_version()
 
-    # Step 2: Install dependencies
-    print("Installing dependencies...")
+    # Paso 2: Instalar dependencias
+    print("Instalando dependencias...")
     install_dependencies()
-    print("All dependencies are installed successfully.")
+    print("Todas las dependencias se instalaron correctamente.")
 
-    print("Setup complete! You can now run your application.")
+    print("¡Configuración completa! Ahora puede ejecutar su aplicación.")
 
 if __name__ == "__main__":
     main()

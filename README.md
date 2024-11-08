@@ -1,6 +1,8 @@
 # tester_cadena_sensores
 
-## Add your files
+## Primeros Pasos
+
+### 1-Obtener archivos del repositorio
 
 ```
 cd existing_repo
@@ -9,14 +11,33 @@ git branch -M main
 git pull origin main
 ```
 
-## Configurar
+### 2-Verificar que se tienen las dependencias necesarias
+
+El siguiente programa realiza esta verificación e instala las dependencias faltantes
+(Se debe tener instalado python versión 3.12.2 como mínimo)
 
 ```
 python setup.py
 ```
 
-## Correr programa
+### Correr programa
 
 ```
 python sensor_chain_tester.py
 ```
+
+## Uso:
+
+### 1 - Conectar Cadena/s de sensores y obtener COM del puerto/s
+
+
+### 2 - Ejecutar el programa y configurar la/s cadena/s de sensores
+
+Se deberá:
+    Ingresar el número de cadenas a testear.
+    Seleccionar el puerto correspondiente para cada cadena
+    Obtener la información de sensores o slaves funcionales de cada cadena utilizando algúno de los métodos disponibles.    
+
+### 3 - Realizar el test
+
+### 4 - Ver resultados 
