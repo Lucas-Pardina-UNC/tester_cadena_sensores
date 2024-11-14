@@ -41,3 +41,14 @@ Se deberá:
 ### 3 - Realizar el test
 
 ### 4 - Ver resultados 
+
+## Latest Release
+
+### Setup
+
+(www.google.com.ar)
+![Release Version](https://github.com/Lucas-Pardina-UNC/tester_cadena_sensores/releases/download/v2.0.0/setup.exe)
+
+### Applicación
+
+![Release Version](https://github.com/Lucas-Pardina-UNC/tester_cadena_sensores/releases/download/v2.0.0/sensor_chain_tester.exe)

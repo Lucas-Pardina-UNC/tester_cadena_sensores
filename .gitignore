@@ -8,3 +8,6 @@ available_slaves_chain_0.txt
 available_slaves_chain_1.txt
 auto_test_log_0.txt
 auto_test_log_1.txt
+build
+dist
+
