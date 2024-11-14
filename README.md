@@ -46,9 +46,8 @@ Se deberá:
 
 ### Setup
 
-(www.google.com.ar)
-![Release Version](https://github.com/Lucas-Pardina-UNC/tester_cadena_sensores/releases/download/v2.0.0/setup.exe)
+![Setup v2.0.0](https://github.com/Lucas-Pardina-UNC/tester_cadena_sensores/releases/download/v2.0.0/setup.exe)
 
 ### Applicación
 
-![Release Version](https://github.com/Lucas-Pardina-UNC/tester_cadena_sensores/releases/download/v2.0.0/sensor_chain_tester.exe)
+![Sensor Chain Tester v2.0.0](https://github.com/Lucas-Pardina-UNC/tester_cadena_sensores/releases/download/v2.0.0/sensor_chain_tester.exe)
