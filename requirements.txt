@@ -1,0 +1,4 @@
+asyncio
+pyserial
+pymodbus>=3.6.9
+openpyxl

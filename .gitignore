@@ -1,0 +1,13 @@
+modbus_test_log.txt
+__pycache__
+.venv
+*.tmp
+temp_string.txt
+available_slaves.txt
+available_slaves_chain_0.txt
+available_slaves_chain_1.txt
+auto_test_log_0.txt
+auto_test_log_1.txt
+build
+dist
+
