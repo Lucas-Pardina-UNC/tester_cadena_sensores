@@ -1,15 +1,14 @@
+import os
 import asyncio
 import sys
 from datetime import datetime
 from pymodbus import ModbusException
+from pymodbus.exceptions import ModbusException
+from typing import List, Tuple, Optional
 from conversion import *
 from modbus_functions import *
-from datetime import datetime
-from pymodbus.exceptions import ModbusException
-import os
-from conversion import adc_to_temperature
 from calc_sheets import *
-from typing import List, Tuple, Optional
+from conversion import adc_to_temperature
 
 async def listen_for_quit() -> bool:
     """

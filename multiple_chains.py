@@ -1,74 +1,42 @@
 import asyncio
+import time
 from pymodbus.client import AsyncModbusSerialClient
 from pymodbus import FramerType
 from pymodbus import pymodbus_apply_logging_config
+from validate import *
 from conversion import *
 from modbus_functions import * 
-import time
-from validate_time import *
-from auto_test import auto_test_cycle, listen_for_quit
 from get_set_available_slaves import *
-from sensor_chain_tester import list_ports
 from manual_modbus import *
-from validate_inputs import *
-
-def select_port_multiple(ports: list) -> str:
-    """Permite al usuario seleccionar un puerto COM por índice o número, y luego lo elimina de la lista para evitar su reutilización."""
-    print("\nPuertos disponibles:")
-    for i, port in enumerate(ports):
-        print(f"{i + 1}: {port.device} - {port.description}")
-    
-    while True:
-        selection = input("\nSeleccione el número de puerto al que desea conectarse (índice o número de puerto, ej. COM11), o 'q' para salir: ")
-        
-        if selection.lower() == 'q':
-            print("Saliendo del programa.")
-            exit()  # Finaliza el programa si se ingresa 'q'
-        
-        try:
-            index = int(selection) - 1
-            if 0 <= index < len(ports):
-                selected_port = ports.pop(index)  # Elimina el puerto seleccionado de la lista
-                return selected_port.device
-        except ValueError:
-            for port in ports:
-                if port.device == selection.upper():
-                    ports.remove(port)  # Elimina el puerto seleccionado por nombre
-                    return port.device
-        
-        print("Por favor, ingrese un número de índice válido o el nombre exacto del puerto (ej. COM11).")
+from validate import *
+from json_config import *
+from auto_test import auto_test_cycle, listen_for_quit
 
 
-def multiple_chain() -> None:
-    num_chains = int(input("Ingrese el número de cadenas que planea probar (1 - cantidad de cadenas conectadas (COM) en su PC): "))
-    print("")  # Línea vacía
-    ports = list_ports()
-    chains_ports = []
-    log_file_names_raw = []
-    slave_info_file_names = []
-
-    for i in range(num_chains):
-        print(f"Seleccione el puerto COM para la cadena {i + 1}")
-        selected_port = select_port_multiple(ports)  # Elimina el puerto de la lista después de seleccionarlo
-        chains_ports.append(selected_port)
-        log_file_names_raw.append(f"auto_test_log_{i}.txt")
-        slave_info_file_names.append(f"available_slaves_chain_{i}.txt")
-
-    # Muestra las cadenas y archivos de registro seleccionados para verificación
-    print("")  # Línea vacía
-    print("Cadenas seleccionadas:", chains_ports)
-    print("Archivos de registro (crudo):", log_file_names_raw)
-    print("Archivos de información de esclavos:", slave_info_file_names)
-    print("")  # Línea vacía
-
-    asyncio.run(run_client_multiple(num_chains, chains_ports, slave_info_file_names, log_file_names_raw))
-
-async def run_client_multiple(num_chains: int, chains_ports: list[str], slave_info_file_names: list[str], log_file_names_raw: list[str]) -> None:
-    """Configura y ejecuta el cliente Modbus RTU."""
-    pymodbus_apply_logging_config("WARNING")
+async def multiple_chain() -> None:
 
     chain_clients = []
-    chain_available_slaves = []
+
+    config = Config(
+        num_chains=0,
+        chains_ports=[],
+        chain_available_slaves=[],
+        log_file_names_raw=[]
+    )
+
+    config, chain_clients = await config_menu("config.json")
+
+    num_chains = config.num_chains
+    chains_ports = config.chains_ports
+    chain_available_slaves = config.chain_available_slaves
+    log_file_names_raw = config.log_file_names_raw
+    
+    await run_client_multiple(chain_clients, num_chains, chains_ports, chain_available_slaves, log_file_names_raw)
+    #asyncio.run(run_client_multiple(chain_clients, num_chains, chains_ports, chain_available_slaves, log_file_names_raw))
+
+async def run_client_multiple(chain_clients, num_chains: int, chains_ports: list[str], chain_available_slaves: list[int], log_file_names_raw: list[str]) -> None:
+    """Configura y ejecuta el cliente Modbus RTU."""
+    pymodbus_apply_logging_config("WARNING")
 
     for i in range(num_chains):
         # Crea un cliente para cada cadena de sensores
@@ -91,50 +59,6 @@ async def run_client_multiple(num_chains: int, chains_ports: list[str], slave_in
             print(f"Conexión exitosa en el puerto {chains_ports[i]}.")
         else:
             print(f"Error de conexión para la cadena de sensores {i}, puerto {chains_ports[i]}.")
-    
-        # Verifica los esclavos disponibles para cada cadena de sensores
-        responsive_slaves = []
-        valid_file = False
-
-        print(f"Verificando la configuración de esclavos disponibles para la cadena de sensores {i}...")
-        print("")  # Línea vacía
-
-        # Verifica la existencia y validez del archivo available_slaves.txt
-        valid_file = file_is_valid(slave_info_file_names[i])
-
-        # Ofrece opciones según la validez del archivo
-        if valid_file:
-            print("Opciones disponibles:")
-            print("1. Usar la información del archivo available_slaves.txt")
-            print("2. Detectar los esclavos disponibles (esto modificará el archivo)")
-            print("3. Ingresar los esclavos disponibles manualmente (esto también modificará el archivo)")
-            option = validate_three_options("Seleccione una opción (1, 2, o 3): ")
-
-            if option == '1':
-                responsive_slaves = get_responsive_slaves(slave_info_file_names[i]) 
-            elif option == '2':
-                responsive_slaves = await list_sensors(client, slave_info_file_names[i])
-            elif option == '3':
-                await input_manual_slaves(responsive_slaves, slave_info_file_names[i])
-            else:
-                print("Opción inválida. Saliendo.")
-                return
-
-        else:
-            print("No se encontró un archivo válido, las únicas opciones disponibles son:")
-            print("1. Detectar los esclavos disponibles (esto modificará el archivo)")
-            print("2. Ingresar los esclavos disponibles manualmente (esto también modificará el archivo)")
-            option = validate_two_options("Seleccione una opción (1 o 2): ")
-
-            if option == '1':
-                responsive_slaves = await list_sensors(client, slave_info_file_names[i])
-            elif option == '2':
-                await input_manual_slaves(responsive_slaves)
-            else:
-                print("Opción inválida. Saliendo.")
-                return
-
-        chain_available_slaves.append(responsive_slaves)
 
     while True:
         print("")  # Línea vacía
@@ -166,6 +90,9 @@ async def run_client_multiple(num_chains: int, chains_ports: list[str], slave_in
                 print(f"Error al cerrar el cliente: {e}")
 
 async def auto_test_multiple(num_chains: int, chain_clients: list[AsyncModbusSerialClient], chain_responsive_slaves: list[list[int]], log_file_names_raw: list[str]) -> None:    
+    
+    print(f"Auto- Test, mis slaves son: {chain_responsive_slaves}")
+    
     """Realiza una prueba automática basada en el modo seleccionado por el usuario."""
     log_data = []
 
@@ -251,7 +178,6 @@ async def auto_test_multiple(num_chains: int, chain_clients: list[AsyncModbusSer
         elif mode == "4":
             print("Saliendo")
             break
-
 
         print("Auto test completado")
     
