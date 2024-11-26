@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['setup.py'],
+    ['..\\setup.py'],
     pathex=[],
     binaries=[],
     datas=[],

@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['sensor_chain_tester.py'],
+    ['..\\sensor_chain_tester.py'],
     pathex=[],
     binaries=[],
     datas=[],
