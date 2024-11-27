@@ -1,5 +1,6 @@
 from serial.tools.list_ports_common import ListPortInfo
 import serial.tools.list_ports
+from validate import validate_two_options
 from typing import Optional, List
 
 def list_ports() -> Optional[List[ListPortInfo]]:
@@ -58,3 +59,16 @@ def select_port_multiple(ports: list) -> str:
                     return port.device
         
         print("Por favor, ingrese un número de índice válido o el nombre exacto del puerto (ej. COM11).")
+
+def select_protocol() -> str:
+    """Permite al usuario seleccionar el protocolo (legacy o Modbus)."""
+    print("Seleccione el protocolo para la cadena de sensores:")
+    print("1: Legacy")
+    print("2: Modbus")
+    
+    menu_option = validate_two_options("Ingrese su elección (1 o 2): ")
+    
+    if menu_option == '1':
+        return 'legacy'
+    elif menu_option == '2':
+        return 'modbus'

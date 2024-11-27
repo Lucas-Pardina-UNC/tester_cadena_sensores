@@ -5,13 +5,12 @@ from pymodbus import FramerType
 from typing import List
 from validate import *
 from get_set_available_slaves import *
-from manage_ports import list_ports
-from manage_ports import select_port_multiple
-
+from manage_ports import *
 class Config:
-    def __init__(self, num_chains: int, chains_ports: List[str], chain_available_slaves: List[List[int]], log_file_names_raw: List[str]):
+    def __init__(self, num_chains: int, chains_ports: List[str], chains_protocols: List[str], chain_available_slaves: List[List[int]], log_file_names_raw: List[str]):
         self.num_chains = num_chains
         self.chains_ports = chains_ports
+        self.chains_protocols = chains_protocols
         self.chain_available_slaves = chain_available_slaves
         self.log_file_names_raw = log_file_names_raw
 
@@ -28,6 +27,7 @@ class Config:
             return Config(
                 num_chains=data['num_chains'],
                 chains_ports=data['chains_ports'],
+                chains_protocols=data['chains_protocols'],
                 chain_available_slaves=data['chain_available_slaves'],
                 log_file_names_raw=data['log_file_names_raw']
             )
@@ -39,6 +39,7 @@ async def config_menu(filename):
     config = Config(
         num_chains=0,
         chains_ports=[],
+        chains_protocols=[],
         chain_available_slaves=[],
         log_file_names_raw=[]
     )
@@ -64,13 +65,14 @@ async def config_menu(filename):
                     stopbits = 1,
                     timeout = 1
                 )
-                print("")  # Línea vacía
-                print("Conectando al servidor...")
-                await client.connect()
-                if client.connected:
-                    print(f"Conexión exitosa en el puerto {config.chains_ports[i]}.")
-                else:
-                    print(f"Error de conexión para la cadena de sensores {i}, puerto {config.chains_ports[i]}.")
+                if config.chains_protocols[i] == 'modbus':
+                    print("")  # Línea vacía
+                    print("Conectando al servidor...")
+                    await client.connect()
+                    if client.connected:
+                        print(f"Conexión exitosa en el puerto {config.chains_ports[i]}.")
+                    else:
+                        print(f"Error de conexión para la cadena de sensores {i}, puerto {config.chains_ports[i]}.")
                 chain_clients.append(client)
         else:
             print("Deberá realizar la configuración nuevamente")
@@ -87,6 +89,7 @@ async def config_menu(filename):
     print("config: ")
     print(f"num_chains= {config.num_chains}")
     print(f"chains_ports= {config.chains_ports}")
+    print(f"chains_protocols= {config.chains_protocols}")
     print(f"chain_available_slaves= {config.chain_available_slaves}")
     print(f"log_file_names_raw= {config.log_file_names_raw}")
     
@@ -112,6 +115,7 @@ def load_config(filename: str) -> Config | None:
         return Config(
             num_chains=config_data["num_chains"],
             chains_ports=config_data["chains_ports"],
+            chains_protocols=config_data["chains_protocols"],
             chain_available_slaves=config_data["chain_available_slaves"],
             log_file_names_raw=config_data["log_file_names_raw"]
         )
@@ -125,6 +129,7 @@ async def set_config(filename):
     config = Config(
         num_chains=0,
         chains_ports=[],
+        chains_protocols=[],
         chain_available_slaves=[],
         log_file_names_raw=[]
     )
@@ -137,6 +142,8 @@ async def set_config(filename):
         print(f"Seleccione el puerto COM para la cadena {i + 1}")
         selected_port = select_port_multiple(ports)  
         config.chains_ports.append(selected_port)
+        selected_protocol = select_protocol()
+        config.chains_protocols.append(selected_protocol)
         config.log_file_names_raw.append(f"auto_test_log_{i}.txt")
         # Crea un cliente para cada cadena de sensores
         client = AsyncModbusSerialClient(
@@ -149,16 +156,17 @@ async def set_config(filename):
             timeout = 1
         )
         
-        print("")  # Línea vacía
-        print("Conectando al servidor...")
-        await client.connect()
-        if client.connected:
-            print(f"Conexión exitosa en el puerto {config.chains_ports[i]}.")
-        else:
-            print(f"Error de conexión para la cadena de sensores {i}, puerto {config.chains_ports[i]}.")
+        if selected_protocol == 'modbus':
+            print("")  # Línea vacía
+            print("Conectando al servidor...")
+            await client.connect()
+            if client.connected:
+                print(f"Conexión exitosa en el puerto {config.chains_ports[i]}.")
+            else:
+                print(f"Error de conexión para la cadena de sensores {i}, puerto {config.chains_ports[i]}.")
         
         chain_clients.append(client)
-        config.chain_available_slaves.append(await slave_data_menu(chain_clients[i]))
+        config.chain_available_slaves.append(await slave_data_menu(chain_clients[i],config.chains_ports[i], selected_protocol))
 
     config.save_to_json(filename)
 

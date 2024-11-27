@@ -8,6 +8,7 @@ from typing import List, Tuple, Optional
 from conversion import *
 from modbus_functions import *
 from calc_sheets import *
+from legacy_commands import *
 from conversion import adc_to_temperature
 
 async def listen_for_quit() -> bool:
@@ -23,25 +24,33 @@ async def listen_for_quit() -> bool:
     result = await future
     return result.strip() == 'q'
 
-async def auto_test_cycle(client, responsive_slaves: List[int], log_data: List[Tuple[int, int, float]], filename: str = "modbus_test_log.txt", chain_id: int = 0) -> None:
+async def auto_test_cycle(client, chain_port, chain_protocol, responsive_slaves: List[int], log_data: List[Tuple[int, int, float]], filename: str = "modbus_test_log.txt", chain_id: int = 0) -> None:
     """A single cycle of the auto-test, logging temperatures for responsive slaves."""
     log_data.clear()  # Clear log_data at the beginning of each cycle
 
     for slave_id in responsive_slaves:
-        try:
-            write_response = await client.write_coil(0, True, slave=slave_id)
-            if not write_response.isError():
-                read_response = await client.read_input_registers(2, count=1, slave=slave_id)
-                if not read_response.isError():
-                    ADC_value = read_response.registers[0]
-                    temperature = adc_to_temperature(ADC_value)
-                    log_data.append((slave_id, ADC_value, temperature))
+        if chain_protocol == "modbus":
+            try:
+                write_response = await client.write_coil(0, True, slave=slave_id)
+                if not write_response.isError():
+                    read_response = await client.read_input_registers(2, count=1, slave=slave_id)
+                    if not read_response.isError():
+                        ADC_value = read_response.registers[0]
+                        temperature = adc_to_temperature(ADC_value)
+                        log_data.append((slave_id, ADC_value, temperature))
+                    else:
+                        print(f"Error al leer el registro de entrada 2 para el esclavo {slave_id}")  
                 else:
-                    print(f"Error al leer el registro de entrada 2 para el esclavo {slave_id}")  
+                    print(f"Error al escribir en la bobina 0 para el esclavo {slave_id}")    
+            except ModbusException:
+                continue
+        elif chain_protocol == "legacy": 
+            legacy_value = legacy_measurement(chain_port, slave_id)
+            if legacy_value:
+                temperature = adc_to_temperature(int(legacy_value))
             else:
-                print(f"Error al escribir en la bobina 0 para el esclavo {slave_id}")    
-        except ModbusException:
-            continue
+                temperature = 4444
+            log_data.append((slave_id, legacy_value, temperature))
 
     # Obtain current date/time
     current_timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
@@ -75,3 +84,5 @@ def delete_log_files() -> None:
             print(f"Archivo no encontrado: {file}")
         except Exception as e:
             print(f"Error al eliminar el archivo {file}: {e}")
+
+    print("")

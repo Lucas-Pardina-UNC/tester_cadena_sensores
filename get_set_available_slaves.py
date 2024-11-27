@@ -1,8 +1,9 @@
-from modbus_functions import read_input_register
 import os
+from modbus_functions import read_input_register
+from legacy_commands import *
 from validate import *
 
-async def list_sensors(client, filename="available_slaves.txt") -> list[int]:
+async def list_sensors(client, chain_port, chain_protocol, filename="available_slaves.txt") -> list[int]:
     """Lee el registro de entrada 0 de cada esclavo hasta un número especificado y escribe los sensores detectados en un archivo."""
     while True:
         try:
@@ -17,26 +18,34 @@ async def list_sensors(client, filename="available_slaves.txt") -> list[int]:
     responsive_slaves = []
 
     for slave_id in range(1, num_slaves_to_test + 1):
-        # Intentar leer el registro de entrada
-        read_value = await read_input_register(client, slave_id, input_register_address=0)
+        if chain_protocol == 'modbus':
+            # Intentar leer el registro de entrada
+            read_value = await read_input_register(client, slave_id, input_register_address=0)
 
-        if read_value is not None:
-            responsive_slaves.append(slave_id)  # Registrar el ID del esclavo que responde
-            sensor_type = ""
-            if read_value in [900, 999]:
-                sensor_type = "Sensor de temperatura"
-            elif read_value == 200:
-                sensor_type = "Sensor de aire"
-            elif read_value == 100:
-                sensor_type = "Sensor de energía"
-            elif read_value == 1000:
-                sensor_type = "Sonda"
+            if read_value is not None:
+                responsive_slaves.append(slave_id)  # Registrar el ID del esclavo que responde
+                sensor_type = ""
+                if read_value in [900, 999]:
+                    sensor_type = "Sensor de temperatura"
+                elif read_value == 200:
+                    sensor_type = "Sensor de aire"
+                elif read_value == 100:
+                    sensor_type = "Sensor de energía"
+                elif read_value == 1000:
+                    sensor_type = "Sonda"
+                else:
+                    sensor_type = "ID de sensor desconocido"
+
+                print(f"Esclavo {slave_id}: ID de sensor = {read_value}, Tipo de sensor = {sensor_type}")
             else:
-                sensor_type = "ID de sensor desconocido"
-
-            print(f"Esclavo {slave_id}: ID de sensor = {read_value}, Tipo de sensor = {sensor_type}")
-        else:
-            print(f"El esclavo {slave_id} no respondió.")
+                print(f"El esclavo {slave_id} no respondió.")
+        elif chain_protocol == 'legacy':
+            read_value = legacy_measurement(chain_port, slave_id)
+            if read_value is not None:
+                responsive_slaves.append(slave_id) 
+                print(f"Esclavo {slave_id}: Funcional (legacy)")
+            else:
+                print(f"El esclavo {slave_id} no respondió")    
 
     print("\nSensores detectados:")
     print(f"Esclavos que respondieron: {responsive_slaves}")
@@ -91,46 +100,59 @@ async def input_manual_slaves(responsive_slaves: list[int], filename="available_
             f.write(f"{slave}\n")
     print(f"Los IDs de los esclavos que respondieron han sido escritos en {filename}.")
 
-async def list_sensors_json(client):
+async def list_sensors_json(client, chain_port = "", chain_protocol="modbus") -> list[int]:
     """Reads input register 0 of each slave up to a specified number and writes detected sensors to a JSON file."""
-    
     # Get the number of slaves to test
     while True:
         try:
-            num_slaves_to_test = int(input("Enter the number of slaves you want to test (1-255): "))
+            num_slaves_to_test = int(input("Ingresa el número de esclavos que deseas probar (1-255): "))
+            print("")
             if 1 <= num_slaves_to_test <= 255:
                 break
             else:
-                print("Please enter a number between 1 and 255.")
+                print("Por favor, ingresa un número entre 1 y 255.")
         except ValueError:
-            print("Invalid input. Please enter an integer between 1 and 255.")
+            print("Entrada no válida. Por favor, ingresa un número entero entre 1 y 255.")
     
     responsive_slaves = []
 
     # Detect responsive slaves
     for slave_id in range(1, num_slaves_to_test + 1):
-        read_value = await read_input_register(client, slave_id, input_register_address=0)
+        if chain_protocol == 'modbus':
+            # Intentar leer el registro de entrada
+            read_value = await read_input_register(client, slave_id, input_register_address=0)
 
-        if read_value is not None:
-            responsive_slaves.append(slave_id)  # Track the responsive slave ID
-            sensor_type = {
-                900: "Temperature sensor",
-                999: "Temperature sensor",
-                200: "Air sensor",
-                100: "Energy sensor",
-                1000: "Probe"
-            }.get(read_value, "Unknown sensor ID")
+            if read_value is not None:
+                responsive_slaves.append(slave_id)  # Registrar el ID del esclavo que responde
+                sensor_type = ""
+                if read_value in [900, 999]:
+                    sensor_type = "Sensor de temperatura"
+                elif read_value == 200:
+                    sensor_type = "Sensor de aire"
+                elif read_value == 100:
+                    sensor_type = "Sensor de energía"
+                elif read_value == 1000:
+                    sensor_type = "Sonda"
+                else:
+                    sensor_type = "ID de sensor desconocido"
 
-            print(f"Slave {slave_id}: Sensor ID = {read_value}, Sensor type = {sensor_type}")
-        else:
-            print(f"Slave {slave_id} did not respond.")
+                print(f"Esclavo {slave_id}: ID de sensor = {read_value}, Tipo de sensor = {sensor_type}")
+            else:
+                print(f"El esclavo {slave_id} no respondió.")
+        elif chain_protocol == 'legacy':
+            read_value = legacy_measurement(chain_port, slave_id)
+            if read_value is not None:
+                responsive_slaves.append(slave_id) 
+                print(f"Esclavo {slave_id}: Funcional (legacy)")
+            else:
+                print(f"El esclavo {slave_id} no respondió")
 
     print("\nDetected sensors:")
     print(f"Responsive slaves: {responsive_slaves}")
     
     return responsive_slaves
 
-async def input_manual_slaves_json():
+async def input_manual_slaves_json() -> list[int]:
     """Prompts the user to input slave IDs manually and saves them to a JSON file."""
 
     responsive_slaves = []
@@ -212,7 +234,7 @@ def get_responsive_slaves(filename="available_slaves.txt") -> list[int]:
     
     return responsive_slaves
 
-async def slave_data_menu(client):
+async def slave_data_menu(client, com_port, protocol):
     responsive_slaves = []
     print("")
     print("-------- Obtención de Slaves Disponivles --------")
@@ -221,7 +243,10 @@ async def slave_data_menu(client):
     option = validate_two_options("Seleccione una opción (1 o 2): ")
 
     if option == '1':
-        responsive_slaves = await list_sensors_json(client)
+        if protocol == 'modbus':
+            responsive_slaves = await list_sensors_json(client)
+        elif protocol == 'legacy':
+             responsive_slaves = await list_sensors_json(client, com_port, protocol)
     elif option == '2':
         responsive_slaves = await input_manual_slaves_json()
 

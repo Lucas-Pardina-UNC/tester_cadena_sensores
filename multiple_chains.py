@@ -1,6 +1,7 @@
 import asyncio
 import time
 from pymodbus.client import AsyncModbusSerialClient
+#from pymodbus.framer import ModbusRtuFramer
 from pymodbus import FramerType
 from pymodbus import pymodbus_apply_logging_config
 from validate import *
@@ -20,6 +21,7 @@ async def multiple_chain() -> None:
     config = Config(
         num_chains=0,
         chains_ports=[],
+        chains_protocols=[],
         chain_available_slaves=[],
         log_file_names_raw=[]
     )
@@ -28,13 +30,14 @@ async def multiple_chain() -> None:
 
     num_chains = config.num_chains
     chains_ports = config.chains_ports
+    chains_protocols = config.chains_protocols
     chain_available_slaves = config.chain_available_slaves
     log_file_names_raw = config.log_file_names_raw
     
-    await run_client_multiple(chain_clients, num_chains, chains_ports, chain_available_slaves, log_file_names_raw)
+    await run_client_multiple(chain_clients, num_chains, chains_ports, chains_protocols, chain_available_slaves, log_file_names_raw)
     #asyncio.run(run_client_multiple(chain_clients, num_chains, chains_ports, chain_available_slaves, log_file_names_raw))
 
-async def run_client_multiple(chain_clients, num_chains: int, chains_ports: list[str], chain_available_slaves: list[int], log_file_names_raw: list[str]) -> None:
+async def run_client_multiple(chain_clients, num_chains: int, chains_ports: list[str], chains_protocols: list[str], chain_available_slaves: list[int], log_file_names_raw: list[str]) -> None:
     """Configura y ejecuta el cliente Modbus RTU."""
     pymodbus_apply_logging_config("WARNING")
 
@@ -51,15 +54,6 @@ async def run_client_multiple(chain_clients, num_chains: int, chains_ports: list
         )
         chain_clients.append(client)
         
-        # Conecta cada cliente
-        print("")  # Línea vacía
-        print("Conectando al servidor...")
-        await client.connect()
-        if client.connected:
-            print(f"Conexión exitosa en el puerto {chains_ports[i]}.")
-        else:
-            print(f"Error de conexión para la cadena de sensores {i}, puerto {chains_ports[i]}.")
-
     while True:
         print("")  # Línea vacía
         print("Seleccione opción de prueba:")
@@ -71,7 +65,7 @@ async def run_client_multiple(chain_clients, num_chains: int, chains_ports: list
 
         if test_option == '1':
             # Realiza las opciones de prueba
-            await auto_test_multiple(num_chains, chain_clients, chain_available_slaves, log_file_names_raw)
+            await auto_test_multiple(num_chains, chain_clients, chains_ports, chains_protocols, chain_available_slaves, log_file_names_raw)
         elif test_option == '2':
             print("Cadenas disponibles:")
             for index, chain in enumerate(chain_clients):
@@ -87,12 +81,10 @@ async def run_client_multiple(chain_clients, num_chains: int, chains_ports: list
             try:
                 chain_clients[i].close()
             except Exception as e:
-                print(f"Error al cerrar el cliente: {e}")
+                pass
+                """ print(f"Error al cerrar el cliente: {e}") """
 
-async def auto_test_multiple(num_chains: int, chain_clients: list[AsyncModbusSerialClient], chain_responsive_slaves: list[list[int]], log_file_names_raw: list[str]) -> None:    
-    
-    print(f"Auto- Test, mis slaves son: {chain_responsive_slaves}")
-    
+async def auto_test_multiple(num_chains: int, chain_clients: list[AsyncModbusSerialClient], chains_ports: list[str], chains_protocols: list[str], chain_responsive_slaves: list[list[int]], log_file_names_raw: list[str]) -> None:    
     """Realiza una prueba automática basada en el modo seleccionado por el usuario."""
     log_data = []
 
@@ -113,7 +105,7 @@ async def auto_test_multiple(num_chains: int, chain_clients: list[AsyncModbusSer
             for i in range(num_cycles):
                 print(f"Ciclo: {i}")
                 for j in range(num_chains):
-                    await auto_test_cycle(chain_clients[j], chain_responsive_slaves[j], log_data, log_file_names_raw[j], j)
+                    await auto_test_cycle(chain_clients[j], chains_ports[j], chains_protocols[j], chain_responsive_slaves[j], log_data, log_file_names_raw[j], j)
 
         elif mode == "2":
             # Ask for total duration in "dd:hh:mm:ss" format
@@ -147,15 +139,15 @@ async def auto_test_multiple(num_chains: int, chain_clients: list[AsyncModbusSer
             
             while time.time() < end_time:
                 for j in range(num_chains):
-                    await auto_test_cycle(chain_clients[j], chain_responsive_slaves[j], log_data, log_file_names_raw[j], j)
+                    await auto_test_cycle(chain_clients[j], chains_ports[j], chains_protocols[j], chain_responsive_slaves[j], log_data, log_file_names_raw[j], j)
                 await asyncio.sleep(interval)  # Wait for the specified interval
 
         elif mode == "3":
-            print("Realizando prueba automática continua. Presione Ctrl+C para detener la prueba.")
+            print("Realizando prueba automática continua. Presione 'q' para detener la prueba.")
 
             async def multiple_auto_test_cycles():
                 for j in range (num_chains):
-                    await auto_test_cycle(chain_clients[j], chain_responsive_slaves[j], log_data, log_file_names_raw[j], j)
+                    await auto_test_cycle(chain_clients[j], chains_ports[j], chains_protocols[j], chain_responsive_slaves[j], log_data, log_file_names_raw[j], j)
 
             try:
                 quit_task = asyncio.create_task(listen_for_quit())
