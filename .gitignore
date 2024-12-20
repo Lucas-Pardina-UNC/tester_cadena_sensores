@@ -1,15 +1,44 @@
-modbus_test_log.txt
+# backedn pyhon environment
 __pycache__
 .venv
-*.tmp
-temp_string.txt
-available_slaves.txt
-available_slaves_chain_0.txt
-available_slaves_chain_1.txt
+
+# backend config
+config.json
+projects.json
+myProjects.json
+
+# backend logs
+modbus_test_log.xlsx
+modbus_test_log.txt
 auto_test_log_0.txt
 auto_test_log_1.txt
+
+#backend executables
 build
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
 dist
-config.json
-modbus_test_log.xlsx
+dist-ssr
+dist-electron
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 

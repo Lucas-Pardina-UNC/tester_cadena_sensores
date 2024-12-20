@@ -1,4 +1,0 @@
-asyncio
-pyserial
-pymodbus>=3.2.0
-openpyxl

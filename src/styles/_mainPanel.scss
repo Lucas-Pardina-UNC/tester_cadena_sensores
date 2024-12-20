@@ -1,0 +1,23 @@
+.main-panel {
+    display: flex;
+    height: 100%; // Full height of the container
+    width: 100%; // Full width of the container
+  
+    &__left {
+      flex: 1; // Adjust proportion as needed
+      max-width: 300px; // Set a fixed width or max-width
+      background-color: #f8f9fa; // Optional styling
+      overflow-y: auto; // Scrollable if content overflows
+      border-right: 1px solid #ddd; // Divider between panels
+    }
+  
+    &__right {
+      flex: 2; // Adjust proportion as needed
+      padding: 16px; // Add some spacing
+      display: flex;
+      flex-direction: column;
+      gap: 16px; // Space between components
+      overflow-y: auto; // Scrollable if content overflows
+    }
+  }
+  
