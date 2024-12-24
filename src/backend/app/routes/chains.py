@@ -91,3 +91,104 @@ def get_chains():
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@chains_bp.route('/update-chain/<int:chain_id>', methods=['PUT'])
+def update_sensor_chain(chain_id):
+    """
+    Update an existing sensor chain in the project config.json by its ID.
+    """
+    data = request.json
+
+    # Load existing projects
+    projects = load_projects()
+
+    # Get the selected project
+    selected_project = next((project for project in projects if project["selected"]), None)
+
+    if not selected_project:
+        return jsonify({"status": "error", "message": "No project is selected."}), 404
+
+    # Path to the config.json file
+    config_file_path = os.path.join(selected_project["folder"], "config.json")
+
+    if not os.path.exists(config_file_path):
+        return jsonify({"status": "error", "message": "Config file not found."}), 404
+
+    try:
+        # Load the config.json
+        with open(config_file_path, "r") as config_file:
+            config_data = json.load(config_file)
+
+        # Find the chain to update by its ID
+        chain_to_update = next((chain for chain in config_data.get("chains", []) if chain["id"] == chain_id), None)
+
+        if not chain_to_update:
+            return jsonify({"status": "error", "message": f"Chain with ID {chain_id} not found."}), 404
+
+        # Update the chain properties
+        for key, value in data.items():
+            if key in chain_to_update:
+                chain_to_update[key] = value
+
+        # Save the updated config
+        with open(config_file_path, "w") as config_file:
+            json.dump(config_data, config_file, indent=4)
+
+        return jsonify({
+            "status": "success",
+            "message": f"Sensor chain with ID {chain_id} updated successfully.",
+            "chain": chain_to_update
+        })
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@chains_bp.route('/delete-chain/<int:chain_id>', methods=['DELETE'])
+def delete_sensor_chain(chain_id):
+    """
+    Delete a sensor chain from the project config.json by its ID.
+    """
+    # Load existing projects
+    projects = load_projects()
+
+    # Get the selected project
+    selected_project = next((project for project in projects if project["selected"]), None)
+
+    if not selected_project:
+        return jsonify({"status": "error", "message": "No project is selected."}), 404
+
+    # Path to the config.json file
+    config_file_path = os.path.join(selected_project["folder"], "config.json")
+
+    if not os.path.exists(config_file_path):
+        return jsonify({"status": "error", "message": "Config file not found."}), 404
+
+    try:
+        # Load the config.json
+        with open(config_file_path, "r") as config_file:
+            config_data = json.load(config_file)
+
+        # Find the chain to delete by its ID
+        chain_to_delete = next((chain for chain in config_data.get("chains", []) if chain["id"] == chain_id), None)
+
+        if not chain_to_delete:
+            return jsonify({"status": "error", "message": f"Chain with ID {chain_id} not found."}), 404
+
+        # Remove the chain from the list
+        config_data["chains"] = [chain for chain in config_data["chains"] if chain["id"] != chain_id]
+
+        # Update the number of chains
+        config_data["num_chains"] = max(len(config_data["chains"]), 0)
+
+        # Save the updated config
+        with open(config_file_path, "w") as config_file:
+            json.dump(config_data, config_file, indent=4)
+
+        return jsonify({
+            "status": "success",
+            "message": f"Sensor chain with ID {chain_id} deleted successfully."
+        })
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500

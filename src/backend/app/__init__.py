@@ -12,11 +12,13 @@ def create_app():
     from .routes.chains import chains_bp
     from .routes.other import other_bp
     from .routes.project_data import project_data_bp
+    from .routes.get_set_slaves import slaves_bp
 
     app.register_blueprint(folders_bp)
     app.register_blueprint(projects_bp)
     app.register_blueprint(chains_bp)
     app.register_blueprint(other_bp)
     app.register_blueprint(project_data_bp)
+    app.register_blueprint(slaves_bp)
 
     return app

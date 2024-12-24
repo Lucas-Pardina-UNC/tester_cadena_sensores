@@ -22,6 +22,7 @@ const MainPanel: React.FC = () => {
           <button onClick={() => setIsAddChainModalOpen(true)}>
             Add Chain
           </button>
+          <button onClick={() => {}}>Run Test</button>
         </div>
       </div>
 

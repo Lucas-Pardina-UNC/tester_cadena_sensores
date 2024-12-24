@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useProjectContext } from "./ProjectContext";
 import { useChainsContext } from "./ChainsContext";
+import SlaveDetectionModal from "./SlaveDetectionModal";
+import { useAlert } from "./CustomAlertContext";
 
 interface Chain {
   chain_port: string;
@@ -21,7 +23,7 @@ interface AddChainModalProps {
 
 const AddChainModal: React.FC<AddChainModalProps> = ({ isOpen, onClose }) => {
   const { selectedProject } = useProjectContext();
-  const { setChainsData } = useChainsContext();
+  const { fetchChainsData } = useChainsContext();
   const [chain, setChain] = useState<Chain>({
     chain_port: "",
     baudrate: 9600,
@@ -47,6 +49,8 @@ const AddChainModal: React.FC<AddChainModalProps> = ({ isOpen, onClose }) => {
   >([]);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
+  const [isDetectModalOpen, setDetectModalOpen] = useState<boolean>(false); // State to control the new modal
+  const { showAlert } = useAlert();
 
   const resetForm = () => {
     setChain({
@@ -103,6 +107,7 @@ const AddChainModal: React.FC<AddChainModalProps> = ({ isOpen, onClose }) => {
         chain
       );
       setSuccessMessage("Chain added successfully!");
+      await showAlert("Chain added successfully!");
       setErrorMessage("");
       await fetchChainsData(selectedProject.folder);
       resetForm();
@@ -113,19 +118,19 @@ const AddChainModal: React.FC<AddChainModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const fetchChainsData = async (projectFolder: string) => {
-    try {
-      const response = await axios.get("http://localhost:5000/get-chains");
+  const openSlaveDetectionModal = () => {
+    setDetectModalOpen(true); // Open the detection modal
+  };
 
-      if (response.data.status === "success") {
-        const chains = response.data.chains;
-        setChainsData(chains);
-      } else {
-        console.error("Error fetching chains:", response.data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching chains:", error);
-    }
+  const closeSlaveDetectionModal = () => {
+    setDetectModalOpen(false); // Close the detection modal
+  };
+
+  const handleSlavesDetected = (slaves: number[]) => {
+    setChain((prevChain) => ({
+      ...prevChain,
+      chain_available_slaves: slaves,
+    }));
   };
 
   if (!isOpen) return null;
@@ -211,6 +216,8 @@ const AddChainModal: React.FC<AddChainModalProps> = ({ isOpen, onClose }) => {
             value={chain.chain_available_slaves.join(",")}
             onChange={handleInputChange}
           />
+          <button onClick={openSlaveDetectionModal}>Detect</button>{" "}
+          {/* Detect button */}
         </div>
         <div className="modal-buttons">
           <button
@@ -228,6 +235,12 @@ const AddChainModal: React.FC<AddChainModalProps> = ({ isOpen, onClose }) => {
         {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
         {successMessage && <p style={{ color: "green" }}>{successMessage}</p>}
       </div>
+      <SlaveDetectionModal
+        isOpen={isDetectModalOpen}
+        onClose={closeSlaveDetectionModal}
+        onSlavesDetected={handleSlavesDetected}
+        chain={chain}
+      />
     </div>
   );
 };

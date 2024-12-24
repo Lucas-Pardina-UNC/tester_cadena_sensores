@@ -1,10 +1,9 @@
 import { useState } from "react";
 /* import axios from "axios"; */
 import CustomSelect from "./CustomSelect";
-import SelectedProject from "./SelectedProject";
+//import SelectedProject from "./SelectedProject";
 import NewProjectModal from "./NewProjectModal";
 import OpenedProjects from "./OpenedProjects";
-import AddChain from "./AddChain";
 
 function Projects() {
   const handleSelect = (message: string) => {
@@ -33,10 +32,13 @@ function Projects() {
           <div key="option3" onClick={() => handleSelect("Close Project")}>
             Close Project
           </div>,
+          <div key="option3" onClick={() => handleSelect("Close Project")}>
+            Delete Selected Project
+          </div>,
           <CustomSelect
             direction="right" // Change to "right" to see the right dropdown
             placeholder="Select an option"
-            selected="Nested"
+            selected="Open Recent Project"
             options={[
               <div key="A" onClick={() => handleSelect("Project A")}>
                 Project A

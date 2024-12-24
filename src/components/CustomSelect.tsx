@@ -19,7 +19,8 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   closeAllDropdowns,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<string>(initialSelected);
+  //const [selectedOption, setSelectedOption] = useState<string>(initialSelected);
+  const [selectedOption] = useState<string>(initialSelected);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{
     top: number;

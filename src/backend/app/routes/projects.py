@@ -123,3 +123,23 @@ def get_opened_projects():
     projects = load_projects()
     opened_projects = [project for project in projects if project["open"]]
     return jsonify({"status": "success", "opened_projects": opened_projects})
+
+@projects_bp.route('/delete-project/<project_id>', methods=['DELETE'])
+def delete_project(project_id):
+    """Delete a project by its ID and remove it from the myProjects.json file"""
+    # Load existing projects
+    projects = load_projects()
+
+    # Find the project to delete
+    project_to_delete = next((project for project in projects if project["id"] == project_id), None)
+
+    if not project_to_delete:
+        return jsonify({"status": "error", "message": "Project not found."}), 404
+
+    # Remove the project from the list
+    projects.remove(project_to_delete)
+
+    # Save the updated projects list
+    save_projects(projects)
+
+    return jsonify({"status": "success", "message": f"Project {project_id} has been deleted."})

@@ -27,6 +27,7 @@ interface ChainsContextType {
   chains: Chain[];
   numberOfChains: number;
   setChainsData: (chains: Chain[]) => void;
+  fetchChainsData: (projectFolder: string) => Promise<void>; // Add fetchChainsData here
 }
 
 const ChainsContext = createContext<ChainsContextType | undefined>(undefined);
@@ -64,7 +65,9 @@ export const ChainsProvider: React.FC<{ children: ReactNode }> = ({
   }, [selectedProject]); // Re-fetch when selectedProject changes
 
   return (
-    <ChainsContext.Provider value={{ chains, numberOfChains, setChainsData }}>
+    <ChainsContext.Provider
+      value={{ chains, numberOfChains, setChainsData, fetchChainsData }}
+    >
       {children}
     </ChainsContext.Provider>
   );

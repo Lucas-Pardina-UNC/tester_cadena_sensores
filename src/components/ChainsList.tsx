@@ -36,7 +36,7 @@ const ChainsList: React.FC = () => {
       <h3>Chains List</h3>
       <div>
         {chains.map((chain) => (
-          <Chain key={chain.id} chain={chain} />
+          <Chain key={chain.id} chain={chain} isExpanded={false} />
         ))}
       </div>
     </div>

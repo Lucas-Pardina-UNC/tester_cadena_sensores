@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useProjectContext } from "./ProjectContext";
 import { useChainsContext } from "./ChainsContext";
@@ -6,7 +5,7 @@ import { useChainsContext } from "./ChainsContext";
 const OpenedProjects: React.FC = () => {
   const { openedProjects, selectedProject, setSelectedProject } =
     useProjectContext();
-  const { setChainsData } = useChainsContext();
+  const { fetchChainsData } = useChainsContext();
 
   const handleSelectProject = async (id: string) => {
     try {
@@ -31,21 +30,6 @@ const OpenedProjects: React.FC = () => {
       }
     } catch (error) {
       console.error("Error selecting project:", error);
-    }
-  };
-
-  const fetchChainsData = async (projectFolder: string) => {
-    try {
-      const response = await axios.get("http://localhost:5000/get-chains");
-
-      if (response.data.status === "success") {
-        const chains = response.data.chains;
-        setChainsData(chains); // Update the ChainsContext with the chains data
-      } else {
-        console.error("Error fetching chains:", response.data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching chains:", error);
     }
   };
 
