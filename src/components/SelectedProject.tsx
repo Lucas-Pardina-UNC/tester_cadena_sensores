@@ -9,11 +9,14 @@ const SelectedProject: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="selected-project">
       <p>
-        <strong>Selected Project:</strong>
-        <strong></strong> {selectedProject.name}
-        {/* <strong> Folder Path:</strong> {selectedProject.folder} */}
+        <strong>Selected Project: </strong>
+        {selectedProject.name}
+      </p>
+      <p>
+        <strong>Folder Path: </strong>
+        {selectedProject.folder}
       </p>
     </div>
   );

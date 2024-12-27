@@ -26,7 +26,8 @@ const OpenedProjects: React.FC = () => {
       // Fetch chains for the new selected project
       if (newSelectedProject?.folder) {
         // Fetch chains for the new selected project if its folder exists
-        fetchChainsData(newSelectedProject.folder);
+        //fetchChainsData(newSelectedProject.folder);
+        fetchChainsData();
       }
     } catch (error) {
       console.error("Error selecting project:", error);

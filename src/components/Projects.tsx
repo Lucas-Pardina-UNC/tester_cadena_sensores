@@ -1,20 +1,73 @@
-import { useState } from "react";
-/* import axios from "axios"; */
+import { useState, useEffect } from "react";
+import axios from "axios";
 import CustomSelect from "./CustomSelect";
-//import SelectedProject from "./SelectedProject";
 import NewProjectModal from "./NewProjectModal";
 import OpenedProjects from "./OpenedProjects";
+import { useProjectContext } from "./ProjectContext"; // Import context
+import { useChainsContext } from "./ChainsContext";
+import { useAlert } from "./CustomAlertContext";
 
 function Projects() {
-  const handleSelect = (message: string) => {
-    console.log(message);
-  };
-
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { selectedProject, fetchOpenedProjects } = useProjectContext(); // Access selectedProject and fetchProjects
+  const { nonOpenedProjects, fetchNonOpenedProjects } = useProjectContext();
+  const { fetchChainsData } = useChainsContext();
+  const { showAlert } = useAlert();
 
   const handleNewProject = () => {
     setIsModalOpen(true);
   };
+
+  const handleDeleteSelectedProject = async () => {
+    if (selectedProject) {
+      try {
+        // Make API call to delete the selected project
+        await axios.delete(
+          `http://localhost:5000/delete-project/${selectedProject.id}`
+        );
+        // Refresh projects list after deletion
+        fetchOpenedProjects();
+        await showAlert("Project deleted successfully!");
+      } catch (error) {
+        console.error("Error deleting project:", error);
+        await showAlert("Failed to delete the project.");
+      }
+    } else {
+      alert("No project selected.");
+    }
+  };
+
+  const handleOpenProject = async (projectId: string) => {
+    try {
+      await axios.patch(`http://localhost:5000/open-project/${projectId}`);
+      await showAlert("Project opened successfully!");
+      fetchNonOpenedProjects(); // Refresh non-opened projects
+      fetchOpenedProjects();
+      fetchChainsData();
+    } catch (error) {
+      console.error("Error opening project:", error);
+      await showAlert("Failed to open the project.");
+    }
+  };
+
+  const handleCloseSelectedProject = async () => {
+    try {
+      // Make API call to close the selected project
+      await axios.patch(`http://localhost:5000/close-selected-project`);
+      // Refresh projects list after closing
+      fetchOpenedProjects();
+      fetchNonOpenedProjects();
+      fetchChainsData();
+      await showAlert("Selected project closed successfully!");
+    } catch (error) {
+      console.error("Error closing selected project:", error);
+      await showAlert("Failed to close the selected project.");
+    }
+  };
+
+  useEffect(() => {
+    fetchNonOpenedProjects();
+  }, []);
 
   return (
     <>
@@ -26,30 +79,27 @@ function Projects() {
           <div key="option1" onClick={handleNewProject}>
             New Project
           </div>,
-          <div key="option2" onClick={() => handleSelect("Open Project")}>
+          /* <div key="option2" onClick={fetchNonOpenedProjects}>
             Open Project
+          </div>, */
+          <div key="option3" onClick={handleCloseSelectedProject}>
+            Close Selected Project
           </div>,
-          <div key="option3" onClick={() => handleSelect("Close Project")}>
-            Close Project
-          </div>,
-          <div key="option3" onClick={() => handleSelect("Close Project")}>
+          <div key="option3" onClick={handleDeleteSelectedProject}>
             Delete Selected Project
           </div>,
           <CustomSelect
             direction="right" // Change to "right" to see the right dropdown
             placeholder="Select an option"
             selected="Open Recent Project"
-            options={[
-              <div key="A" onClick={() => handleSelect("Project A")}>
-                Project A
-              </div>,
-              <div key="B" onClick={() => handleSelect("Project B")}>
-                Project B
-              </div>,
-              <div key="C" onClick={() => handleSelect("Project C")}>
-                Project C
-              </div>,
-            ]}
+            options={nonOpenedProjects.map((project) => (
+              <div
+                key={project.id}
+                onClick={() => handleOpenProject(project.id)}
+              >
+                {project.name}
+              </div>
+            ))}
           />,
         ]}
       />

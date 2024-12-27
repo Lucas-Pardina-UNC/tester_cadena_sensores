@@ -19,7 +19,6 @@ interface Chain {
   chain_protocol: string;
   chain_available_slaves: number[];
   result_columns: string;
-  //[key: string]: any; // Allows flexibility for additional chain parameters
   fetchChainsData: (projectFolder: string) => Promise<void>; // Exposed fetch function
 }
 
@@ -27,7 +26,7 @@ interface ChainsContextType {
   chains: Chain[];
   numberOfChains: number;
   setChainsData: (chains: Chain[]) => void;
-  fetchChainsData: (projectFolder: string) => Promise<void>; // Add fetchChainsData here
+  fetchChainsData: () => Promise<void>; // Add fetchChainsData here
 }
 
 const ChainsContext = createContext<ChainsContextType | undefined>(undefined);
@@ -43,7 +42,7 @@ export const ChainsProvider: React.FC<{ children: ReactNode }> = ({
     setChains(newChains);
   };
 
-  const fetchChainsData = async (projectFolder: string) => {
+  const fetchChainsData = async () => {
     try {
       const response = await axios.get("http://localhost:5000/get-chains");
 
@@ -54,13 +53,14 @@ export const ChainsProvider: React.FC<{ children: ReactNode }> = ({
         console.error("Error fetching chains:", response.data.message);
       }
     } catch (error) {
-      console.error("Error fetching chains:", error);
+      console.log("Error fetching chains:", error);
+      setChainsData([]);
     }
   };
 
   useEffect(() => {
     if (selectedProject?.folder) {
-      fetchChainsData(selectedProject.folder); // Initial fetch on component mount
+      fetchChainsData(); // Initial fetch on component mount
     }
   }, [selectedProject]); // Re-fetch when selectedProject changes
 

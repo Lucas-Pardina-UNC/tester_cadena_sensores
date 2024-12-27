@@ -109,7 +109,8 @@ const AddChainModal: React.FC<AddChainModalProps> = ({ isOpen, onClose }) => {
       setSuccessMessage("Chain added successfully!");
       await showAlert("Chain added successfully!");
       setErrorMessage("");
-      await fetchChainsData(selectedProject.folder);
+      //await fetchChainsData(selectedProject.folder);
+      await fetchChainsData();
       resetForm();
       onClose();
     } catch (error: any) {

@@ -46,7 +46,7 @@ const Chain: React.FC<ChainProps> = ({ chain }) => {
       );
       if (response.data.status === "success") {
         await showAlert("Chain changes saved successfully!");
-        fetchChainsData("");
+        fetchChainsData();
       } else {
         alert(`Error updating chain: ${response.data.message}`);
       }
@@ -68,7 +68,7 @@ const Chain: React.FC<ChainProps> = ({ chain }) => {
       if (response.ok) {
         const result = await response.json();
         console.log(result);
-        fetchChainsData("");
+        fetchChainsData();
         const message = `Chain with ID ${chain.id} deleted successfully.`;
         await showAlert(message);
         //alert(`Chain with ID ${chain.id} deleted successfully.`);

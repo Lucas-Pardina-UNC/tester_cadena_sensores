@@ -69,20 +69,3 @@ def add_chain_to_project():
 
     project_data_manager.add_chain_to_project(project_name, chain_data)
     return jsonify({"message": f"Chain added to project {project_name} successfully."}), 200
-
-
-@project_data_bp.route("/update_chain_data", methods=["POST"])
-def update_chain_data():
-    data = request.json
-    project_name = data.get("project_name")
-    chain_port = data.get("chain_port")
-    updated_chain_data = data.get("updated_chain_data")
-
-    if not project_name or not chain_port or not updated_chain_data:
-        return jsonify({"error": "Missing project_name, chain_port, or updated_chain_data"}), 400
-
-    try:
-        project_data_manager.update_chain_data(project_name, chain_port, updated_chain_data)
-        return jsonify({"message": f"Chain data for port {chain_port} updated successfully."}), 200
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 404

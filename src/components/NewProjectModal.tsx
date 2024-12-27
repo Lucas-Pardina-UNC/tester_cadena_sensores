@@ -3,34 +3,30 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useProjectContext } from "./ProjectContext";
 import { useChainsContext } from "./ChainsContext";
+import { useAlert } from "./CustomAlertContext";
 
 interface NewProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  //onCreate: (projectName: string, folderPath: string) => void;
 }
 
 const NewProjectModal: React.FC<NewProjectModalProps> = ({
   isOpen,
   onClose,
-  //onCreate,
 }) => {
   const [projectName, setProjectName] = useState("");
   const [folderPath, setFolderPath] = useState("");
   const [validationMessage, setValidationMessage] = useState("");
 
   const { setSelectedProject } = useProjectContext(); // Destructure from context
-  const { fetchProjects } = useProjectContext();
-  const { setChainsData } = useChainsContext();
+  const { fetchOpenedProjects } = useProjectContext();
+  const { fetchChainsData } = useChainsContext();
+  const { showAlert } = useAlert();
 
   const resetFields = () => {
     setProjectName("");
     setFolderPath("");
   };
-
-  /* const handleProjectNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setProjectName(e.target.value);
-  }; */
 
   const selectFolder = async () => {
     try {
@@ -64,12 +60,8 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
       );
 
       if (response.data.status === "success") {
-        /*alert(
-          `Project "${projectName}" created successfully in "${folderPath}"!` // Este alert hace perder el focus.
-        );*/
-        //window.ipcRenderer.focusWindow(); // Esto en teoría lo soluciona, pero hay que lograr que lo tome
-        //this.inputReference.current.focus();
-        //onCreate(projectName, folderPath); // Notify the parent
+        const message = `Project "${projectName}" created successfully in "${folderPath}`;
+        await showAlert(message);
         setSelectedProject({
           id: response.data.project.id,
           name: projectName,
@@ -77,8 +69,8 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
           open: true,
           selected: true,
         });
-        await fetchProjects();
-        fetchChainsData(folderPath);
+        await fetchOpenedProjects();
+        fetchChainsData();
         resetFields(); // Clear fields only after successful creation
         onClose(); // Close the modal
       } else {
@@ -92,21 +84,6 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
   if (!isOpen) return null; // If close then don't render anything
 
-  const fetchChainsData = async (projectFolder: string) => {
-    try {
-      const response = await axios.get("http://localhost:5000/get-chains");
-
-      if (response.data.status === "success") {
-        const chains = response.data.chains;
-        setChainsData(chains); // Update the ChainsContext with the chains data
-      } else {
-        console.error("Error fetching chains:", response.data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching chains:", error);
-    }
-  };
-
   return (
     <div className="modal-overlay">
       <div className="modal">
@@ -114,12 +91,9 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
         <div>
           <label>Project Name</label>
           <input
-            //ref={inputReference}
             type="text"
-            //autoFocus
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
-            //onChange={handleProjectNameChange}
             placeholder="Enter project name"
           />
         </div>

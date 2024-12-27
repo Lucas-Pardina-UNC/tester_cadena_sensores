@@ -85,32 +85,6 @@ def select_project(project_id):
 
     return jsonify({"status": "success", "message": f"Project {project_id} is now selected."})
 
-
-@projects_bp.route('/open-project/<project_id>', methods=['PATCH'])
-def open_project(project_id):
-    """Set a project's open status to true"""
-    projects = load_projects()
-    for project in projects:
-        if project["id"] == project_id:
-            project["open"] = True
-            save_projects(projects)
-            return jsonify({"status": "success", "message": f"Project {project_id} is now open."})
-
-    return jsonify({"status": "error", "message": "Project not found."}), 404
-
-
-@projects_bp.route('/close-project/<project_id>', methods=['PATCH'])
-def close_project(project_id):
-    """Set a project's open status to false"""
-    projects = load_projects()
-    for project in projects:
-        if project["id"] == project_id:
-            project["open"] = False
-            save_projects(projects)
-            return jsonify({"status": "success", "message": f"Project {project_id} is now closed."})
-
-    return jsonify({"status": "error", "message": "Project not found."}), 404
-
 @projects_bp.route('/projects', methods=['GET'])
 def get_projects():
     with open('myProjects.json', 'r') as f:
@@ -124,9 +98,62 @@ def get_opened_projects():
     opened_projects = [project for project in projects if project["open"]]
     return jsonify({"status": "success", "opened_projects": opened_projects})
 
+@projects_bp.route('/api/projects/non-opened', methods=['GET'])
+def get_non_opened_projects():
+    """Returns a list of all non-opened projects."""
+    projects = load_projects()
+    non_opened_projects = [project for project in projects if not project["open"]]
+    return jsonify({"status": "success", "non_opened_projects": non_opened_projects})
+
+#@projects_bp.route('/open-selected-project/<project_id>', methods=['PATCH'])
+@projects_bp.route('/open-project/<project_id>', methods=['PATCH'])
+def open_selected_project(project_id):
+    """Open a project by its ID and mark it as selected."""
+    projects = load_projects()
+
+    # Find the project to open
+    project_to_open = next((project for project in projects if project["id"] == project_id), None)
+
+    if not project_to_open:
+        return jsonify({"status": "error", "message": "Project not found."}), 404
+
+    # Set all other projects' selected field to False and their open status unchanged
+    for project in projects:
+        if project["id"] == project_id:
+            project["open"] = True
+            project["selected"] = True
+        else:
+            project["selected"] = False
+
+    # Save the updated projects list
+    save_projects(projects)
+
+    return jsonify({"status": "success", "message": f"Project {project_id} is now open and selected.", "project": project_to_open})
+
+@projects_bp.route('/close-selected-project', methods=['PATCH'])
+def close_selected_project():
+    """Close the currently selected project by setting its open status to false."""
+    projects = load_projects()
+
+    # Find the currently selected project
+    selected_project = next((project for project in projects if project["selected"]), None)
+
+    if not selected_project:
+        return jsonify({"status": "error", "message": "No project is currently selected."}), 404
+
+    # Set the open status of the selected project to False
+    selected_project["open"] = False
+    selected_project["selected"] = False
+
+    # Save the updated projects list
+    save_projects(projects)
+
+    return jsonify({"status": "success", "message": f"Project {selected_project['id']} has been closed."})
+
+
 @projects_bp.route('/delete-project/<project_id>', methods=['DELETE'])
 def delete_project(project_id):
-    """Delete a project by its ID and remove it from the myProjects.json file"""
+    """Delete a project by its ID and remove it from the myProjects.json file and the project folder's config.json"""
     # Load existing projects
     projects = load_projects()
 
@@ -136,10 +163,18 @@ def delete_project(project_id):
     if not project_to_delete:
         return jsonify({"status": "error", "message": "Project not found."}), 404
 
+    # Get the folder path of the project
+    project_folder = project_to_delete["folder"]
+
+    # Remove the config.json file from the project folder
+    config_file_path = os.path.join(project_folder, "config.json")
+    if os.path.exists(config_file_path):
+        os.remove(config_file_path)
+
     # Remove the project from the list
     projects.remove(project_to_delete)
 
     # Save the updated projects list
     save_projects(projects)
 
-    return jsonify({"status": "success", "message": f"Project {project_id} has been deleted."})
+    return jsonify({"status": "success", "message": f"Project {project_id} and its config.json have been deleted."})
