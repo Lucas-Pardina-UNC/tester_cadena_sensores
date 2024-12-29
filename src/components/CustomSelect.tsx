@@ -4,6 +4,7 @@ import ReactDOM from "react-dom";
 interface CustomSelectProps {
   direction: "down" | "right";
   options: React.ReactNode[];
+  //options: React.ReactNode | React.ReactNode[]; // Allow a single ReactNode or an array
   placeholder: string;
   selected?: string;
   onSelect?: (value: string) => void;

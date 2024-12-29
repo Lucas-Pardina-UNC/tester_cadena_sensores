@@ -1,4 +1,6 @@
 from flask import Blueprint, jsonify, request
+from multiprocessing import Process, Queue
+from tkinter import Tk, filedialog
 import os
 import json
 import uuid
@@ -39,8 +41,9 @@ def create_project():
         return jsonify({"status": "error", "message": "A project with this name already exists."}), 400
 
     # Create a new project entry with a sequential id
+    project_id = str(uuid.uuid4())
     new_project = {
-        "id": str(uuid.uuid4()),  # Generate a unique ID
+        "id": project_id,  # Generate a unique ID
         "name": project_name,
         "folder": folder_path,
         "open": True,  # Default to open
@@ -57,6 +60,8 @@ def create_project():
     # Create the config.json file inside the project folder
     config_file_path = os.path.join(folder_path, "config.json")
     config_data = {
+        "id": project_id,  # Include the project ID as the first field
+        "name": project_name,
         "num_chains": 0,
         "chains": []
     }
@@ -66,7 +71,9 @@ def create_project():
     # Save the updated projects list
     save_projects(projects)
 
+    #print("Hola")
     return jsonify({"status": "success", "message": "Project created successfully.", "project": new_project})
+
 
 @projects_bp.route('/select-project/<project_id>', methods=['PATCH'])
 def select_project(project_id):
@@ -105,8 +112,134 @@ def get_non_opened_projects():
     non_opened_projects = [project for project in projects if not project["open"]]
     return jsonify({"status": "success", "non_opened_projects": non_opened_projects})
 
+def open_file_dialog(queue):
+    """Function to select a file using tkinter"""
+    root = Tk()
+    root.withdraw()  # Hide the main tkinter window
+    root.attributes('-topmost', True)  # Bring the file dialog to the front
+    file_path = filedialog.askopenfilename(
+        title="Select config.json file",
+        filetypes=[("JSON Files", "*.json")],
+    )
+    queue.put(file_path)
+
+@projects_bp.route('/open-project', methods=['POST'])
+def open_project():
+    """Open an existing project by selecting its config.json file"""
+    queue = Queue()
+    process = Process(target=open_file_dialog, args=(queue,))
+    process.start()
+    process.join()
+    file_path = queue.get()
+
+    if not file_path or not os.path.isfile(file_path):
+        return jsonify({"status": "error", "message": "No file selected or file does not exist."}), 400
+
+    # Ensure the selected file is named config.json
+    if not file_path.endswith("config.json"):
+        return jsonify({"status": "error", "message": "Invalid file selected. Please select a config.json file."}), 400
+
+    # Load the contents of the config.json file
+    try:
+        with open(file_path, "r") as config_file:
+            config_data = json.load(config_file)
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Failed to read the config.json file: {e}"}), 400
+
+    # Extract the project ID and name from the config.json file
+    project_id = config_data.get("id")
+    project_name = config_data.get("name")
+    if not project_id or not project_name:
+        return jsonify({"status": "error", "message": "Invalid config.json file. Missing 'id' or 'name'."}), 400
+
+    # Load existing projects (implement your `load_projects` function)
+    projects = load_projects()
+
+    # Check if the project is already in the list
+    if any(project["id"] == project_id for project in projects):
+        return jsonify({"status": "error", "message": "This project is already added."}), 400
+
+    # Add the project to the projects list
+    new_project = {
+        "id": project_id,
+        "name": project_name,
+        "folder": os.path.dirname(file_path),
+        "open": True,
+        "selected": True
+    }
+
+    # Set all other projects' selected field to False
+    for project in projects:
+        project["selected"] = False
+
+    projects.append(new_project)
+
+    # Save the updated projects list (implement your `save_projects` function)
+    save_projects(projects)
+
+    return jsonify({"status": "success", "message": "Project opened successfully.", "project": new_project})
+
+""" @projects_bp.route('/open-project', methods=['POST'])
+def open_project():
+    #Open an existing project by selecting its config.json file
+    # Open file dialog for the user to select a config.json file
+    root = Tk()
+    root.withdraw()  # Hide the main tkinter window
+    root.attributes('-topmost', True)  # Bring the file dialog to the front
+    file_path = filedialog.askopenfilename(
+        title="Select config.json file",
+        filetypes=[("JSON Files", "*.json")],
+    )
+
+    if not file_path or not os.path.isfile(file_path):
+        return jsonify({"status": "error", "message": "No file selected or file does not exist."}), 400
+
+    # Ensure the selected file is named config.json
+    if not file_path.endswith("config.json"):
+        return jsonify({"status": "error", "message": "Invalid file selected. Please select a config.json file."}), 400
+
+    # Load the contents of the config.json file
+    try:
+        with open(file_path, "r") as config_file:
+            config_data = json.load(config_file)
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Failed to read the config.json file: {e}"}), 400
+
+    # Extract the project ID and name from the config.json file
+    project_id = config_data.get("id")
+    project_name = config_data.get("name")
+    if not project_id or not project_name:
+        return jsonify({"status": "error", "message": "Invalid config.json file. Missing 'id' or 'name'."}), 400
+
+    # Load existing projects
+    projects = load_projects()
+
+    # Check if the project is already in the list
+    if any(project["id"] == project_id for project in projects):
+        return jsonify({"status": "error", "message": "This project is already added."}), 400
+
+    # Add the project to the projects list
+    new_project = {
+        "id": project_id,
+        "name": project_name,
+        "folder": os.path.dirname(file_path),
+        "open": True,
+        "selected": True
+    }
+
+    # Set all other projects' selected field to False
+    for project in projects:
+        project["selected"] = False
+
+    projects.append(new_project)
+
+    # Save the updated projects list
+    save_projects(projects)
+
+    return jsonify({"status": "success", "message": "Project opened successfully.", "project": new_project}) """
+
 #@projects_bp.route('/open-selected-project/<project_id>', methods=['PATCH'])
-@projects_bp.route('/open-project/<project_id>', methods=['PATCH'])
+@projects_bp.route('/open-recent-project/<project_id>', methods=['PATCH'])
 def open_selected_project(project_id):
     """Open a project by its ID and mark it as selected."""
     projects = load_projects()
@@ -150,10 +283,14 @@ def close_selected_project():
 
     return jsonify({"status": "success", "message": f"Project {selected_project['id']} has been closed."})
 
-
 @projects_bp.route('/delete-project/<project_id>', methods=['DELETE'])
 def delete_project(project_id):
-    """Delete a project by its ID and remove it from the myProjects.json file and the project folder's config.json"""
+    """Delete a project by its ID based on the received flags (deleteFolder, deleteConfigFile)."""
+    # Parse JSON data from the request
+    data = request.get_json()
+    delete_folder = data.get("deleteFolder", False)
+    delete_config_file = data.get("deleteConfigFile", False)
+
     # Load existing projects
     projects = load_projects()
 
@@ -165,11 +302,21 @@ def delete_project(project_id):
 
     # Get the folder path of the project
     project_folder = project_to_delete["folder"]
-
-    # Remove the config.json file from the project folder
     config_file_path = os.path.join(project_folder, "config.json")
-    if os.path.exists(config_file_path):
-        os.remove(config_file_path)
+
+    # Delete config.json if requested
+    if delete_config_file and os.path.exists(config_file_path):
+        try:
+            os.remove(config_file_path)
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"Failed to delete config.json: {str(e)}"}), 500
+
+    # Delete the project folder if requested
+    if delete_folder and os.path.exists(project_folder):
+        try:
+            os.rmdir(project_folder)  # Removes empty folder
+        except OSError as e:
+            return jsonify({"status": "error", "message": f"Failed to delete folder: {str(e)}"}), 500
 
     # Remove the project from the list
     projects.remove(project_to_delete)
@@ -177,4 +324,9 @@ def delete_project(project_id):
     # Save the updated projects list
     save_projects(projects)
 
-    return jsonify({"status": "success", "message": f"Project {project_id} and its config.json have been deleted."})
+    return jsonify({
+        "status": "success",
+        "message": f"Project {project_id} deleted.",
+        "folderDeleted": delete_folder,
+        "configFileDeleted": delete_config_file
+    })
