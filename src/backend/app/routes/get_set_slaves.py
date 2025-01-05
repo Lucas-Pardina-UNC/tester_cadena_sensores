@@ -17,6 +17,7 @@ async def list_sensors():
     num_slaves_to_test = data.get("num_slaves_to_test")
     chain_port = data.get("chain_port")
     chain_protocol = data.get("chain_protocol")
+    connection_success = False
 
     # Validate input
     if not isinstance(num_slaves_to_test, int) or not (1 <= num_slaves_to_test <= 255):
@@ -27,18 +28,28 @@ async def list_sensors():
 
     responsive_slaves = []
 
+    if chain_protocol == "modbus":
+        client = AsyncModbusSerialClient(
+            port=chain_port,
+            framer=FramerType.RTU,
+            baudrate=9600,
+            bytesize=8,
+            parity="N",
+            stopbits=1,
+            timeout=1
+        )
+        print("")  # Línea vacía
+        print("Conectando al servidor...")
+        await client.connect()
+        if client.connected:
+            connection_success = True
+            print(f"Conexión exitosa en el puerto {chain_port}.")
+        else:
+            print(f"Error de conexión para la cadena de sensores, puerto {chain_port}.")
+
     for slave_id in range(1, num_slaves_to_test + 1):
-        if chain_protocol == "modbus":
-            client = AsyncModbusSerialClient(
-                port=chain_port,
-                framer=FramerType.RTU,
-                baudrate=9600,
-                bytesize=8,
-                parity="N",
-                stopbits=1,
-                timeout=1
-            )
-            read_value = await read_input_register(client, slave_id=slave_id, input_register_address=0)  # Replace 'client' as needed
+        if chain_protocol == "modbus" and connection_success:
+            read_value = await read_input_register(client, slave_id=slave_id, input_register_address=0)  
             if read_value is not None:
                 responsive_slaves.append(slave_id)
         elif chain_protocol == "legacy":
@@ -46,5 +57,14 @@ async def list_sensors():
             if read_value is not None:
                 responsive_slaves.append(slave_id)
 
-    # Return responsive slaves in response
-    return jsonify({"responsive_slaves": responsive_slaves}), 200
+    """ if client.connected():
+        try:
+            client.close()
+        except Exception as e:
+            print(f"Error al cerrar el cliente: {e}") """
+
+    if responsive_slaves:
+        # Return responsive slaves in response
+        return jsonify({"responsive_slaves": responsive_slaves}), 200
+    else:
+        return jsonify({"error": "No Slaves detected'. Must be 'modbus' or 'legacy'."}), 400

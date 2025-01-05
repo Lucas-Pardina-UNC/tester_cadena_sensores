@@ -52,25 +52,6 @@ function Projects() {
     }
   };
 
-  /*const handleDeleteSelectedProject = async () => {
-    if (selectedProject) {
-      try {
-        // Make API call to delete the selected project
-        await axios.delete(
-          `http://localhost:5000/delete-project/${selectedProject.id}`
-        );
-        // Refresh projects list after deletion
-        fetchOpenedProjects();
-        await showAlert("Project deleted successfully!");
-      } catch (error) {
-        console.error("Error deleting project:", error);
-        await showAlert("Failed to delete the project.");
-      }
-    } else {
-      alert("No project selected.");
-    }
-  };*/
-
   const handleOpenProject = async (projectId: string) => {
     try {
       await axios.patch(

@@ -45,7 +45,7 @@ def add_sensor_chain(project_id):
     start_column = column_letters[column_start]
     mid_column = column_letters[column_start + 1]
     end_column = column_letters[column_start + 2]
-    result_columns = f"{start_column}1-{end_column}3"
+    result_columns = f"{start_column}-{end_column}"
 
     # Update the chain data with ID and result_columns
     chain_data["id"] = new_chain_id
@@ -143,11 +143,11 @@ def update_sensor_chain(chain_id):
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-
 @chains_bp.route('/delete-chain/<int:chain_id>', methods=['DELETE'])
 def delete_sensor_chain(chain_id):
     """
-    Delete a sensor chain from the project config.json by its ID.
+    Delete a sensor chain from the project config.json by its ID
+    and rearrange the IDs and result_columns of remaining chains.
     """
     # Load existing projects
     projects = load_projects()
@@ -178,8 +178,20 @@ def delete_sensor_chain(chain_id):
         # Remove the chain from the list
         config_data["chains"] = [chain for chain in config_data["chains"] if chain["id"] != chain_id]
 
+        # Reindex the remaining chains and update result_columns
+        base_columns = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"  # Adjust for Excel-style columns
+        for index, chain in enumerate(config_data["chains"]):
+            new_id = index + 1
+            chain["id"] = new_id
+
+            # Calculate result_columns: 3 columns per chain + 1 gap column
+            start_col_index = (new_id - 1) * 4  # 4 columns per chain (3 data + 1 gap)
+            start_col = base_columns[start_col_index]
+            end_col = base_columns[start_col_index + 2]  # End of the 3-column range
+            chain["result_columns"] = f"{start_col}-{end_col}"
+
         # Update the number of chains
-        config_data["num_chains"] = max(len(config_data["chains"]), 0)
+        config_data["num_chains"] = len(config_data["chains"])
 
         # Save the updated config
         with open(config_file_path, "w") as config_file:
@@ -187,7 +199,8 @@ def delete_sensor_chain(chain_id):
 
         return jsonify({
             "status": "success",
-            "message": f"Sensor chain with ID {chain_id} deleted successfully."
+            "message": f"Sensor chain with ID {chain_id} deleted successfully.",
+            "updated_chains": config_data["chains"]
         })
 
     except Exception as e:

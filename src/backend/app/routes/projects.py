@@ -62,6 +62,7 @@ def create_project():
     config_data = {
         "id": project_id,  # Include the project ID as the first field
         "name": project_name,
+        "project_folder": folder_path,
         "num_chains": 0,
         "chains": []
     }
@@ -71,7 +72,6 @@ def create_project():
     # Save the updated projects list
     save_projects(projects)
 
-    #print("Hola")
     return jsonify({"status": "success", "message": "Project created successfully.", "project": new_project})
 
 
@@ -178,65 +178,6 @@ def open_project():
     save_projects(projects)
 
     return jsonify({"status": "success", "message": "Project opened successfully.", "project": new_project})
-
-""" @projects_bp.route('/open-project', methods=['POST'])
-def open_project():
-    #Open an existing project by selecting its config.json file
-    # Open file dialog for the user to select a config.json file
-    root = Tk()
-    root.withdraw()  # Hide the main tkinter window
-    root.attributes('-topmost', True)  # Bring the file dialog to the front
-    file_path = filedialog.askopenfilename(
-        title="Select config.json file",
-        filetypes=[("JSON Files", "*.json")],
-    )
-
-    if not file_path or not os.path.isfile(file_path):
-        return jsonify({"status": "error", "message": "No file selected or file does not exist."}), 400
-
-    # Ensure the selected file is named config.json
-    if not file_path.endswith("config.json"):
-        return jsonify({"status": "error", "message": "Invalid file selected. Please select a config.json file."}), 400
-
-    # Load the contents of the config.json file
-    try:
-        with open(file_path, "r") as config_file:
-            config_data = json.load(config_file)
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"Failed to read the config.json file: {e}"}), 400
-
-    # Extract the project ID and name from the config.json file
-    project_id = config_data.get("id")
-    project_name = config_data.get("name")
-    if not project_id or not project_name:
-        return jsonify({"status": "error", "message": "Invalid config.json file. Missing 'id' or 'name'."}), 400
-
-    # Load existing projects
-    projects = load_projects()
-
-    # Check if the project is already in the list
-    if any(project["id"] == project_id for project in projects):
-        return jsonify({"status": "error", "message": "This project is already added."}), 400
-
-    # Add the project to the projects list
-    new_project = {
-        "id": project_id,
-        "name": project_name,
-        "folder": os.path.dirname(file_path),
-        "open": True,
-        "selected": True
-    }
-
-    # Set all other projects' selected field to False
-    for project in projects:
-        project["selected"] = False
-
-    projects.append(new_project)
-
-    # Save the updated projects list
-    save_projects(projects)
-
-    return jsonify({"status": "success", "message": "Project opened successfully.", "project": new_project}) """
 
 #@projects_bp.route('/open-selected-project/<project_id>', methods=['PATCH'])
 @projects_bp.route('/open-recent-project/<project_id>', methods=['PATCH'])
