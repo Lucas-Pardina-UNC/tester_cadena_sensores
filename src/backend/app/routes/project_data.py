@@ -1,71 +1,121 @@
-from flask import Flask, Blueprint, request, jsonify
+import json
+import uuid
+from pymodbus.client import AsyncModbusSerialClient
+from pymodbus import FramerType
 
-project_data_bp = Blueprint("project_data", __name__)
+class Chain:
+    def __init__(self, chain_port, baudrate, bytesize, parity, stopbits, timeout, chain_protocol, chain_available_slaves, chain_id, result_columns):
+        self.chain_port = chain_port
+        self.baudrate = baudrate
+        self.bytesize = bytesize
+        self.parity = parity
+        self.stopbits = stopbits
+        self.timeout = timeout
+        self.chain_protocol = chain_protocol
+        self.chain_available_slaves = chain_available_slaves
+        self.id = chain_id
+        self.result_columns = result_columns
+        self.chain_client = None  # Placeholder for the client object
 
-# Project data management class
-class ProjectDataManager:
+        if self.chain_protocol == "modbus":
+            self.chain_client = AsyncModbusSerialClient(
+                port=self.chain_port,
+                framer=FramerType.RTU,
+                baudrate=self.baudrate,
+                bytesize=self.bytesize,
+                parity=self.parity,
+                stopbits=self.stopbits,
+                timeout=self.timeout,
+            )
+
+    def to_dict(self):
+        """
+        Export chain details to a dictionary (excluding the client object).
+        """
+        return {
+            "chain_port": self.chain_port,
+            "baudrate": self.baudrate,
+            "bytesize": self.bytesize,
+            "parity": self.parity,
+            "stopbits": self.stopbits,
+            "timeout": self.timeout,
+            "chain_protocol": self.chain_protocol,
+            "chain_available_slaves": self.chain_available_slaves,
+            "id": self.id,
+            "result_columns": self.result_columns,
+        }
+
+
+class Project:
     def __init__(self):
-        # In-memory storage (could be replaced with persistent storage later)
-        self.projects_data = {}
+        self.id = str(uuid.uuid4())  # Automatically generate a unique project ID
+        self.name = ""
+        self.project_folder = ""
+        self.num_chains = 0
+        self.chains = []  # This will hold a list of Chain objects
 
-    def get_project_data(self, project_name):
-        return self.projects_data.get(project_name)
+    def add_chain(self, chain_data):
+        """
+        Create a Chain object from the provided data and add it to the chains list.
+        """
+        chain = Chain(
+            chain_port=chain_data["chain_port"],
+            baudrate=chain_data["baudrate"],
+            bytesize=chain_data["bytesize"],
+            parity=chain_data["parity"],
+            stopbits=chain_data["stopbits"],
+            timeout=chain_data["timeout"],
+            chain_protocol=chain_data["chain_protocol"],
+            chain_available_slaves=chain_data["chain_available_slaves"],
+            chain_id=chain_data["id"],
+            result_columns=chain_data["result_columns"],
+        )
+        self.chains.append(chain)
+        #self.num_chains += 1
 
-    def save_project_data(self, project_name, project_data):
-        self.projects_data[project_name] = project_data
+    def from_json(self, file_path):
+        """
+        Load project details and chains from a JSON file.
+        """
+        with open(file_path, "r") as json_file:
+            data = json.load(json_file)
 
-    def add_chain_to_project(self, project_name, chain_data):
-        project_data = self.get_project_data(project_name) or {"chains": []}
-        project_data["chains"].append(chain_data)
-        self.save_project_data(project_name, project_data)
+        self.id = data.get("id", str(uuid.uuid4()))
+        self.name = data["name"]
+        self.project_folder = data["project_folder"]
+        self.num_chains = data["num_chains"]
+        self.chains = []
 
-    def update_chain_data(self, project_name, chain_port, updated_chain_data):
-        project_data = self.get_project_data(project_name)
-        if not project_data:
-            raise ValueError(f"Project {project_name} not found.")
-        
-        for chain in project_data["chains"]:
-            if chain["chain_port"] == chain_port:
-                chain.update(updated_chain_data)
-                break
-        else:
-            raise ValueError(f"Chain with port {chain_port} not found in project {project_name}.")
+        for chain_data in data["chains"]:
+            self.add_chain(chain_data) 
 
-# Initialize the manager globally
-project_data_manager = ProjectDataManager()
-
-# Blueprint for project data routes
-project_data_bp = Blueprint("project_data", __name__)
-
-@project_data_bp.route("/get_project_data/<project_name>", methods=["GET"])
-def get_project_data(project_name):
-    project_data = project_data_manager.get_project_data(project_name)
-    if not project_data:
-        return jsonify({"error": "Project not found"}), 404
-    return jsonify(project_data), 200
+    def to_json(self):
+        """
+        Export the current project as a JSON string.
+        """
+        export_data = {
+            "id": self.id,
+            "name": self.name,
+            "project_folder": self.project_folder,
+            "num_chains": self.num_chains,
+            "chains": [chain.to_dict() for chain in self.chains],
+        }
+        return json.dumps(export_data, indent=4)
 
 
-@project_data_bp.route("/save_project_data", methods=["POST"])
-def save_project_data():
-    data = request.json
-    project_name = data.get("project_name")
-    project_data = data.get("project_data")
-
-    if not project_name or not project_data:
-        return jsonify({"error": "Missing project_name or project_data"}), 400
-
-    project_data_manager.save_project_data(project_name, project_data)
-    return jsonify({"message": f"Project {project_name} data saved successfully."}), 200
+# Singleton instance of the Project class
+project_instance = Project()
 
 
-@project_data_bp.route("/add_chain_to_project", methods=["POST"])
-def add_chain_to_project():
-    data = request.json
-    project_name = data.get("project_name")
-    chain_data = data.get("chain_data")
+def load_project_from_file(file_path):
+    """
+    Load the project instance with data from a JSON file.
+    """
+    project_instance.from_json(file_path)
 
-    if not project_name or not chain_data:
-        return jsonify({"error": "Missing project_name or chain_data"}), 400
 
-    project_data_manager.add_chain_to_project(project_name, chain_data)
-    return jsonify({"message": f"Chain added to project {project_name} successfully."}), 200
+def get_project_instance():
+    """
+    Access the singleton project instance.
+    """
+    return project_instance
