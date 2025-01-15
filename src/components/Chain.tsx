@@ -24,6 +24,9 @@ const Chain: React.FC<ChainProps> = ({ chain }) => {
   const [editableChain, setEditableChain] = useState(chain);
   const { fetchChainsData } = useChainsContext();
   const { showAlert } = useAlert();
+  const [comPorts, setComPorts] = useState<
+    { device: string; description: string }[]
+  >([]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -82,10 +85,29 @@ const Chain: React.FC<ChainProps> = ({ chain }) => {
     }
   };
 
+  const fetchComPorts = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/list-com-ports");
+      if (response.data.status === "success") {
+        setComPorts(response.data.ports);
+      } else {
+        console.error("Error fetching COM ports:", response.data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching COM ports:", error);
+    }
+  };
+
   useEffect(() => {
     setExpanded(false); // Collapse when chain changes
     setEditableChain(chain); // Update the editableChain state to reflect the new chain
   }, [chain]);
+
+  useEffect(() => {
+    if (expanded) {
+      fetchComPorts();
+    }
+  }, [expanded]);
 
   return (
     <div
@@ -106,34 +128,61 @@ const Chain: React.FC<ChainProps> = ({ chain }) => {
           <div>
             <label>
               Chain Port:{" "}
-              <input
+              <select
+                name="chain_port"
+                value={chain.chain_port}
+                onChange={handleInputChange}
+              >
+                <option value="">Select a COM Port</option>
+                {comPorts.map((port) => (
+                  <option key={port.device} value={port.device}>
+                    {port.device} - {port.description}
+                  </option>
+                ))}
+              </select>
+              {/* <input
                 type="text"
                 name="chain_port"
                 value={editableChain.chain_port}
                 onChange={handleInputChange}
-              />
+              /> */}
             </label>
           </div>
           <div>
             <label>
               Baudrate:{" "}
-              <input
-                type="number"
+              <select
+                /* type="number" */
                 name="baudrate"
                 value={editableChain.baudrate}
                 onChange={handleInputChange}
-              />
+              >
+                <option value="1200">1200</option>
+                <option value="2400">2400</option>
+                <option value="4800">4800</option>
+                <option value="9600">9600</option>
+                <option value="14400">14400</option>
+                <option value="19200">19200</option>
+                <option value="38400">38400</option>
+                <option value="57600">57600</option>
+                <option value="115200">115200</option>
+              </select>
             </label>
           </div>
           <div>
             <label>
               Bytesize:{" "}
-              <input
-                type="number"
+              <select
+                /* type="number" */
                 name="bytesize"
                 value={editableChain.bytesize}
                 onChange={handleInputChange}
-              />
+              >
+                <option value="5">5 bits</option>
+                <option value="6">6 bits</option>
+                <option value="7">7 bits</option>
+                <option value="8">8 bits</option>
+              </select>
             </label>
           </div>
           <div>
@@ -147,18 +196,23 @@ const Chain: React.FC<ChainProps> = ({ chain }) => {
                 <option value="N">None</option>
                 <option value="E">Even</option>
                 <option value="O">Odd</option>
+                <option value="M">Mark</option>
+                <option value="S">Space</option>
               </select>
             </label>
           </div>
           <div>
             <label>
               Stopbits:{" "}
-              <input
-                type="number"
+              <select
+                /* type="number" */
                 name="stopbits"
                 value={editableChain.stopbits}
                 onChange={handleInputChange}
-              />
+              >
+                <option value="1">1</option>
+                <option value="2">2</option>
+              </select>
             </label>
           </div>
           <div>
@@ -167,6 +221,7 @@ const Chain: React.FC<ChainProps> = ({ chain }) => {
               <input
                 type="number"
                 name="timeout"
+                min={0}
                 value={editableChain.timeout}
                 onChange={handleInputChange}
               />
@@ -175,12 +230,15 @@ const Chain: React.FC<ChainProps> = ({ chain }) => {
           <div>
             <label>
               Chain Protocol:{" "}
-              <input
-                type="text"
+              <select
+                /* type="text" */
                 name="chain_protocol"
                 value={editableChain.chain_protocol}
                 onChange={handleInputChange}
-              />
+              >
+                <option value="legacy">Legacy</option>
+                <option value="modbus">Modbus</option>
+              </select>
             </label>
           </div>
           <div>

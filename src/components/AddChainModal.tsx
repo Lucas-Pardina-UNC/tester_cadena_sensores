@@ -157,39 +157,59 @@ const AddChainModal: React.FC<AddChainModalProps> = ({ isOpen, onClose }) => {
         </div>
         <div>
           <label>Baudrate:</label>
-          <input
-            type="number"
+          <select
             name="baudrate"
             value={chain.baudrate}
             onChange={handleInputChange}
-          />
+          >
+            <option value="1200">1200</option>
+            <option value="2400">2400</option>
+            <option value="4800">4800</option>
+            <option value="9600">9600</option>
+            <option value="14400">14400</option>
+            <option value="19200">19200</option>
+            <option value="38400">38400</option>
+            <option value="57600">57600</option>
+            <option value="115200">115200</option>
+          </select>
         </div>
         <div>
           <label>Bytesize:</label>
-          <input
-            type="number"
+          <select
             name="bytesize"
             value={chain.bytesize}
             onChange={handleInputChange}
-          />
+          >
+            <option value="5">5 bits</option>
+            <option value="6">6 bits</option>
+            <option value="7">7 bits</option>
+            <option value="8">8 bits</option>
+          </select>
         </div>
         <div>
           <label>Parity:</label>
-          <input
-            type="text"
+          <select
             name="parity"
             value={chain.parity}
             onChange={handleInputChange}
-          />
+          >
+            <option value="N">None</option>
+            <option value="E">Even</option>
+            <option value="O">Odd</option>
+            <option value="M">Mark</option>
+            <option value="S">Space</option>
+          </select>
         </div>
         <div>
           <label>Stopbits:</label>
-          <input
-            type="number"
+          <select
             name="stopbits"
             value={chain.stopbits}
             onChange={handleInputChange}
-          />
+          >
+            <option value="1">1</option>
+            <option value="2">2</option>
+          </select>
         </div>
         <div>
           <label>Timeout:</label>
@@ -202,12 +222,14 @@ const AddChainModal: React.FC<AddChainModalProps> = ({ isOpen, onClose }) => {
         </div>
         <div>
           <label>Chain Protocol:</label>
-          <input
-            type="text"
+          <select
             name="chain_protocol"
             value={chain.chain_protocol}
             onChange={handleInputChange}
-          />
+          >
+            <option value="legacy">Legacy</option>
+            <option value="modbus">Modbus</option>
+          </select>
         </div>
         <div>
           <label>Available Slaves (comma separated):</label>
