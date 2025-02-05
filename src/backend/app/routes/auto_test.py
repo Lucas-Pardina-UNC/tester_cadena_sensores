@@ -202,16 +202,18 @@ async def read_sensor():
         # Get the current project instance
         load_project_from_file(file_path)
         project = get_project_instance()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-        # Validate chain_id
-        if chain_id < 0 or chain_id > project.num_chains:
-            return jsonify({"error": "Invalid chain_id"}), 400
-        
-        chain = project.chains[chain_id -1]
+    # Validate chain_id
+    if chain_id < 0 or chain_id > project.num_chains:
+        return jsonify({"error": "Invalid chain_id"}), 400
+    
+    chain = project.chains[chain_id -1]
 
-        # Ensure the chain uses the Modbus protocol
-        if chain.chain_protocol != "modbus":
-            return jsonify({"error": "Only Modbus protocol is supported for this operation"}), 400
+    # Ensure the chain uses the Modbus protocol
+    if chain.chain_protocol == "modbus":
+        #return jsonify({"error": "Only Modbus protocol is supported for this operation"}), 400
 
         # Connect to the chain's client if not already connected
         if not chain.chain_client.connected:
@@ -239,21 +241,23 @@ async def read_sensor():
                 try:
                     chain.chain_client.close()
                 except Exception as e:
-                    print(f"Error al cerrar el cliente de la cadena {chain_id}: {e}")
-
-            return jsonify({
-                "status": "success",
-                "chain_id": chain_id,
-                "slave_id": slave_id,
-                "adc_value": adc_value,
-                "temperature": temperature
-            }), 200
-
+                    print(f"Error al cerrar el cliente de la cadena {chain_id}: {e}", flush=True)
         except ModbusException as e:
             return jsonify({"error": f"Modbus error: {str(e)}"}), 500
+    
+    elif chain.chain_protocol == "legacy":
+        adc_value = legacy_measurement(chain.chain_port, slave_id)
+        print(f"ADC_Value: {adc_value}", flush=True)
+        print(f"Type of legacy adc value= {type(adc_value)}", flush=True)
+        temperature = adc_to_temperature(int(adc_value))
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return jsonify({
+            "status": "success",
+            "chain_id": chain_id,
+            "slave_id": slave_id,
+            "adc_value": adc_value,
+            "temperature": temperature
+        }), 200
     
 @auto_test_bp.route("/get_sensor_id_and_type", methods=["POST"])
 async def read_slave_id():
@@ -282,49 +286,50 @@ async def read_slave_id():
         chain = project.chains[chain_id -1]
 
         # Validate that the chain uses Modbus protocol
-        if chain.chain_protocol != "modbus":
-            return jsonify({"error": "This chain does not use the Modbus protocol"}), 400
+        if chain.chain_protocol == "modbus":
+            #return jsonify({"error": "This chain does not use the Modbus protocol"}), 400
 
-        # Establish connection if not already connected
-        if not chain.chain_client.connected:
-            await chain.chain_client.connect()
+            # Establish connection if not already connected
+            if not chain.chain_client.connected:
+                await chain.chain_client.connect()
 
-        if not chain.chain_client.connected:
-            return jsonify({"error": f"Failed to connect to chain {chain_id}"}), 500
+            if not chain.chain_client.connected:
+                return jsonify({"error": f"Failed to connect to chain {chain_id}"}), 500
 
-        # Read the input register 0
-        sensor_id = None
-        sensor_type = "Unknown sensor type"
-        try:
-            read_response = await chain.chain_client.read_input_registers(0, count=1, slave=slave_id)
-            if not read_response.isError():
-                sensor_id = read_response.registers[0]
-
-                # Determine the sensor type
-                if sensor_id in [900, 999]:
-                    sensor_type = "Temperature sensor"
-                elif sensor_id == 200:
-                    sensor_type = "Air sensor"
-                elif sensor_id == 100:
-                    sensor_type = "Energy sensor"
-                elif sensor_id == 1000:
-                    sensor_type = "Probe"
-                else:
-                    sensor_type = "Unknown sensor ID"
-            else:
-                return jsonify({"error": f"Failed to read input register 0 for slave {slave_id}"}), 500
-        except ModbusException:
-            return jsonify({"error": f"Modbus exception occurred while reading from slave {slave_id}"}), 500
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
-
-        # Close connections if open
-        if chain.chain_client.connected:
+            # Read the input register 0
+            sensor_id = None
+            sensor_type = "Unknown sensor type"
             try:
-                chain.chain_client.close()
-            except Exception as e:
-                print(f"Error al cerrar el cliente de la cadena {chain_id}: {e}")
+                read_response = await chain.chain_client.read_input_registers(0, count=1, slave=slave_id)
+                if not read_response.isError():
+                    sensor_id = read_response.registers[0]
 
+                    # Determine the sensor type
+                    if sensor_id in [900, 999]:
+                        sensor_type = "Temperature sensor"
+                    elif sensor_id == 200:
+                        sensor_type = "Air sensor"
+                    elif sensor_id == 100:
+                        sensor_type = "Energy sensor"
+                    elif sensor_id == 1000:
+                        sensor_type = "Probe"
+                    else:
+                        sensor_type = "Unknown sensor ID"
+                else:
+                    return jsonify({"error": f"Failed to read input register 0 for slave {slave_id}"}), 500
+            except ModbusException:
+                return jsonify({"error": f"Modbus exception occurred while reading from slave {slave_id}"}), 500
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+            # Close connections if open
+            if chain.chain_client.connected:
+                try:
+                    chain.chain_client.close()
+                except Exception as e:
+                    print(f"Error al cerrar el cliente de la cadena {chain_id}: {e}")
+        elif chain.chain_protocol == "legacy":
+            [sensor_id, sensor_type] = legacy_get_sensor_id(chain.chain_port, slave_id)
         # Return the sensor ID and type
         return jsonify({
             "status": "success",

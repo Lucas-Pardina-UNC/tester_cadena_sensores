@@ -36,11 +36,46 @@ def legacy_measurement(com_port, slave: int) -> str:
             # Extract the number after "L>"
             match = re.search(r'L>(\d+)', response)
             if match:
-                return match.group(1)  # Return the number found
+                post_regex = match.group(1) 
+                #print(f"legacy_measurement: {post_regex}",flush=True)
+                return post_regex  # Return the number found
             else:
                 print(f"Slave: {slave}: No se encontró un número válido en la respuesta: {response}.")
                 return None
 
     except serial.SerialException as e:
         print(f"Slave: {slave} Error de conexión: {e}")
+        return None
+    
+def legacy_get_sensor_id(com_port, slave: int) -> str:
+    """Retrieve the sensor ID using the legacy protocol."""
+    sensor_types = {
+        "HU": "Humidity",
+        "TE": "Temperature",
+        "WD": "Wind Direction",
+        "WS": "Wind Speed",
+        "RD": "Direct Radiation",
+        "RN": "Net Radiation",
+        "PE": "Pressure"
+    }
+    try:
+        with serial.Serial(port=com_port, baudrate=9600, timeout=1) as ser:
+            # Send command to get sensor type code
+            get_id_command = f"L#00{slave}I\r\n\r\n"
+            response = send_command(ser, get_id_command)
+            
+            print(response)
+            
+            # Extract the sensor type and slave ID
+            match = re.search(r'L>([A-Z]{2})00(\d+)', response)
+            if match:
+                sensor_code = match.group(1)
+                sensor_name = sensor_types.get(sensor_code, "Unknown Sensor")
+                print(f"Slave {slave}: Sensor Type: {sensor_name} ({sensor_code})")
+                return sensor_code, sensor_name
+            else:
+                print(f"Slave {slave}: No valid sensor type found in response: {response}.")
+                return None
+    except serial.SerialException as e:
+        print(f"Slave {slave} Connection error: {e}")
         return None
