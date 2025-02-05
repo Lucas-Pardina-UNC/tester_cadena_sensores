@@ -1,4 +1,4 @@
-.main-panel {
+/* .main-panel {
     display: flex;
     height: 100%; // Full height of the container
     width: 100%; // Full width of the container
@@ -19,5 +19,138 @@
       gap: 16px; // Space between components
       overflow-y: auto; // Scrollable if content overflows
     }
+  } */
+ /*  .main-panel {
+    display: flex;
+    height: 100%; // Full height of the container
+    width: 100%; // Full width of the container
+    background-color: #1e1e1e; // VS Code dark background color
+    color: #d4d4d4; // VS Code light text color
+  
+    &__left {
+      flex: 1; // Adjust proportion as needed
+      max-width: 300px; // Set a fixed width or max-width
+      background-color: #252526; // VS Code sidebar background color
+      overflow-y: auto; // Scrollable if content overflows
+      border-right: 1px solid #333; // Divider between panels
+      padding: 16px; // Add some spacing
+  
+      // Optional styling for the Projects component
+      .projects {
+        margin-bottom: 16px; // Space below the Projects component
+      }
+    }
+  
+    &__right {
+      flex: 2; // Adjust proportion as needed
+      padding: 16px; // Add some spacing
+      display: flex;
+      flex-direction: column;
+      gap: 16px; // Space between components
+      overflow-y: auto; // Scrollable if content overflows
+  
+      // Optional styling for the SelectedProject and ChainsList components
+      .selected-project,
+      .chains-list {
+        background-color: #2d2d2d; // VS Code editor background color
+        padding: 16px; // Add some spacing
+        border-radius: 4px; // Rounded corners
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); // Subtle shadow
+      }
+  
+      // Styling for buttons
+      button {
+        background-color: #007acc; // VS Code blue button color
+        color: #ffffff; // White text color
+        border: none; // Remove default border
+        padding: 10px 20px; // Add some padding
+        border-radius: 4px; // Rounded corners
+        cursor: pointer; // Pointer cursor on hover
+        transition: background-color 0.3s; // Smooth transition
+  
+        &:hover {
+          background-color: #005a9e; // Darker blue on hover
+        }
+  
+        &:active {
+          background-color: #004578; // Even darker blue on active
+        }
+      }
+    }
+  } */
+  .main-panel {
+    display: flex;
+    height: 100%; // Full height of the container
+    width: 100%; // Full width of the container
+    background-color: #1e1e1e; // VS Code dark background color
+    color: #d4d4d4; // VS Code light text color
+  
+    &__left {
+      flex: 1; // Adjust proportion as needed
+      max-width: 300px; // Set a fixed width or max-width
+      background-color: #252526; // VS Code sidebar background color
+      overflow-y: auto; // Scrollable if content overflows
+      border-right: 1px solid #333; // Divider between panels
+      padding: 16px; // Add some spacing
+  
+      // Optional styling for the Projects component
+      .projects {
+        margin-bottom: 16px; // Space below the Projects component
+      }
+    }
+  
+    &__right {
+      flex: 2; // Adjust proportion as needed
+      padding: 16px; // Add some spacing
+      display: flex;
+      flex-direction: column;
+      gap: 16px; // Space between components
+      overflow-y: auto; // Scrollable if content overflows
+  
+      // Optional styling for the SelectedProject and ChainsList components
+      .selected-project,
+      .chains-list {
+        background-color: #2d2d2d; // VS Code editor background color
+        padding: 16px; // Add some spacing
+        border-radius: 4px; // Rounded corners
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); // Subtle shadow
+      }
+  
+      // Styling for buttons
+      button {
+        background-color: #007acc; // VS Code blue button color
+        color: #ffffff; // White text color
+        border: none; // Remove default border
+        padding: 10px 20px; // Add some padding
+        border-radius: 4px; // Rounded corners
+        cursor: pointer; // Pointer cursor on hover
+        transition: background-color 0.3s; // Smooth transition
+  
+        &:hover {
+          background-color: #005a9e; // Darker blue on hover
+        }
+  
+        &:active {
+          background-color: #004578; // Even darker blue on active
+        }
+      }
+    }
   }
   
+  // Responsive design
+  @media (max-width: 768px) {
+    .main-panel {
+      flex-direction: column;
+  
+      &__left {
+        max-width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #333;
+      }
+  
+      &__right {
+        flex: 1;
+        padding: 8px;
+      }
+    }
+  }

@@ -9,6 +9,7 @@ interface CustomSelectProps {
   selected?: string;
   onSelect?: (value: string) => void;
   closeAllDropdowns?: () => void; // Callback to close parent dropdowns
+  className?: string; // Add className prop
 }
 
 const CustomSelect: React.FC<CustomSelectProps> = ({
@@ -18,6 +19,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   selected: initialSelected = "",
   onSelect,
   closeAllDropdowns,
+  className, // Destructure className prop
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   //const [selectedOption, setSelectedOption] = useState<string>(initialSelected);
@@ -73,7 +75,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   }, [isOpen, direction]);
 
   return (
-    <div className="custom-select" ref={dropdownRef}>
+    <div className={`custom-select ${className}`} ref={dropdownRef}>
       <div className="selected" onClick={toggleDropdown}>
         {selectedOption || placeholder}
         <span className={`arrow ${direction}`}></span>

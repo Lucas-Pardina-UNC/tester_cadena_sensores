@@ -88,7 +88,9 @@ function Projects() {
 
   return (
     <>
+      {/* <div className="projects-container"> */}
       <CustomSelect
+        className="projects-dropdown"
         direction="down" // Change to "right" to see the right dropdown
         placeholder="Select an option"
         selected="Projects"
@@ -135,6 +137,7 @@ function Projects() {
         onSuccess={handleDeleteSuccess}
         projectId={selectedProject?.id || null}
       />
+      {/* </div> */}
     </>
   );
 }

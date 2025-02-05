@@ -62,7 +62,7 @@ async def auto_test_by_cycles():
     file_path = data.get("file_path")
     num_cycles = data.get("num_cycles", 3)  # Default to 3 cycles if not provided
     log_data = []
-
+    
     if not file_path:
         return jsonify({"error": "file_path is required"}), 400
     else:
@@ -85,7 +85,7 @@ async def auto_test_by_cycles():
                     print(f"Error de conexión para la cadena {j} - puerto {project.chains[0].chain_port}.")
 
         for i in range(num_cycles):
-            print(f"Ciclo: {i}")
+            #print(f"Ciclo: {i}")
             for j in range(project.num_chains):
                 await auto_test_cycle(project.chains[j].chain_client, project.chains[j].chain_port, project.chains[j].chain_protocol, project.chains[j].chain_available_slaves, log_data, excel_file_path, j)
 
@@ -185,21 +185,29 @@ async def read_sensor():
     Expects JSON payload with "chain_id" and "slave_id".
     """
     data = request.json
+    file_path = data.get("file_path")
     chain_id = data.get("chain_id")
     slave_id = data.get("slave_id")
+
+    chain_id_type = type(chain_id)
+    slave_id_type = type(slave_id)
 
     if chain_id is None or slave_id is None:
         return jsonify({"error": "chain_id and slave_id are required"}), 400
 
+    if not file_path:
+            return jsonify({"error": "file_path is required"}), 400
+
     try:
         # Get the current project instance
+        load_project_from_file(file_path)
         project = get_project_instance()
 
         # Validate chain_id
-        if chain_id < 0 or chain_id >= project.num_chains:
+        if chain_id < 0 or chain_id > project.num_chains:
             return jsonify({"error": "Invalid chain_id"}), 400
-
-        chain = project.chains[chain_id]
+        
+        chain = project.chains[chain_id -1]
 
         # Ensure the chain uses the Modbus protocol
         if chain.chain_protocol != "modbus":
@@ -226,6 +234,13 @@ async def read_sensor():
             adc_value = read_response.registers[0]
             temperature = adc_to_temperature(adc_value)
 
+            # Close connections if open
+            if chain.chain_client.connected:
+                try:
+                    chain.chain_client.close()
+                except Exception as e:
+                    print(f"Error al cerrar el cliente de la cadena {chain_id}: {e}")
+
             return jsonify({
                 "status": "success",
                 "chain_id": chain_id,
@@ -240,7 +255,7 @@ async def read_sensor():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@auto_test_bp.route("/read_slave_id", methods=["POST"])
+@auto_test_bp.route("/get_sensor_id_and_type", methods=["POST"])
 async def read_slave_id():
     """
     Endpoint to read the ID and sensor type from input register 0 for a specific slave in a specific chain.
@@ -249,6 +264,7 @@ async def read_slave_id():
     try:
         # Parse JSON payload
         data = request.json
+        file_path = data.get("file_path")
         chain_id = data.get("chain_id")
         slave_id = data.get("slave_id")
 
@@ -256,13 +272,14 @@ async def read_slave_id():
             return jsonify({"error": "Both 'chain_id' and 'slave_id' are required"}), 400
 
         # Get the current project instance
+        load_project_from_file(file_path)
         project = get_project_instance()
 
         # Validate chain_id
-        if chain_id < 0 or chain_id >= project.num_chains:
+        if chain_id < 0 or chain_id > project.num_chains:
             return jsonify({"error": f"Invalid chain_id. Must be between 0 and {project.num_chains - 1}"}), 400
 
-        chain = project.chains[chain_id]
+        chain = project.chains[chain_id -1]
 
         # Validate that the chain uses Modbus protocol
         if chain.chain_protocol != "modbus":
@@ -300,6 +317,13 @@ async def read_slave_id():
             return jsonify({"error": f"Modbus exception occurred while reading from slave {slave_id}"}), 500
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+        # Close connections if open
+        if chain.chain_client.connected:
+            try:
+                chain.chain_client.close()
+            except Exception as e:
+                print(f"Error al cerrar el cliente de la cadena {chain_id}: {e}")
 
         # Return the sensor ID and type
         return jsonify({

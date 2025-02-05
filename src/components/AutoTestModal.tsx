@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useChainsContext } from "./ChainsContext";
+import { useProjectContext } from "./ProjectContext";
 
 interface AutoTestModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
   const [responsiveSlaves, setResponsiveSlaves] = useState<number[]>([]);
   const [selectedSlave, setSelectedSlave] = useState("");
   const [sensorValue, setSensorValue] = useState("");
+  const [sensorType, setSensorType] = useState("");
   const [days, setDays] = useState(0);
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
@@ -31,6 +33,8 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
   const [intervalMinutes, setIntervalMinutes] = useState(0);
   const [intervalSeconds, setIntervalSeconds] = useState(0);
   const { chains, fetchChainsData } = useChainsContext();
+  const { selectedProject } = useProjectContext();
+  const project_folder = selectedProject?.folder + "/config.json";
 
   /* useEffect(() => {
     fetchChainsData();
@@ -78,11 +82,13 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
 
   const handleReadSensor = async () => {
     try {
-      const response = await axios.post("/api/auto_test/read_sensor", {
-        chain: parseInt(selectedChain),
-        slave: parseInt(selectedSlave),
+      const response = await axios.post("http://localhost:5000/read_sensor", {
+        file_path: project_folder,
+        chain_id: parseInt(selectedChain),
+        slave_id: parseInt(selectedSlave),
       });
-      setSensorValue(response.data.sensor_value);
+      //console.log(response.data);
+      setSensorValue(response.data.temperature);
     } catch (error) {
       console.error("Error reading sensor:", error);
     }
@@ -91,13 +97,15 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
   const handleGetSensorIdAndType = async () => {
     try {
       const response = await axios.post(
-        "/api/auto_test/get_sensor_id_and_type",
+        "http://localhost:5000/get_sensor_id_and_type",
         {
-          chain: parseInt(selectedChain),
-          slave: parseInt(selectedSlave),
+          file_path: project_folder,
+          chain_id: parseInt(selectedChain),
+          slave_id: parseInt(selectedSlave),
         }
       );
-      setSensorValue(response.data.sensor_id_and_type);
+      //console.log(response.data);
+      setSensorType(response.data.sensor_type);
     } catch (error) {
       console.error("Error getting sensor ID and type:", error);
     }
@@ -105,18 +113,24 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
 
   const handleRunTestByCycles = async () => {
     try {
-      const response = await axios.post("/api/auto_test/auto_test_by_cycles", {
-        file_path: "path/to/project/file", // Replace with the actual file path
-        num_cycles: parseInt(cycles),
-      });
+      const response = await axios.post(
+        "http://localhost:5000/auto_test_by_cycles",
+        {
+          file_path: project_folder,
+          num_cycles: parseInt(cycles),
+        }
+      );
 
       if (response.data.status === "success") {
         console.log("Test completed successfully");
+        //console.log(response.data);
       } else {
         console.log("Test failed");
+        alert("Test failed");
       }
     } catch (error) {
       console.error("Error running test:", error);
+      alert("Error running test");
     }
   };
 
@@ -131,9 +145,9 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
 
     try {
       const response = await axios.post(
-        "/api/auto_test/auto_test_with_interval",
+        "http://localhost:5000/auto_test_with_interval",
         {
-          file_path: "path/to/project/file", // Replace with the actual file path
+          file_path: project_folder,
           total_duration: totalDuration,
           interval: interval,
         }
@@ -397,6 +411,9 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
               </button>
               <div className="sensor-value">
                 <strong>Sensor Value:</strong> {sensorValue}
+              </div>
+              <div className="sensor-type">
+                <strong>Sensor Type:</strong> {sensorType}
               </div>
               <button onClick={clearSensorValue}>Clear</button>
             </div>

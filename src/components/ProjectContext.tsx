@@ -4,7 +4,7 @@ import axios from "axios";
 interface Project {
   id: string;
   name: string;
-  folder: string; // Added folder property
+  folder: string;
   open: boolean;
   selected: boolean;
 }
@@ -14,8 +14,8 @@ interface ProjectContextType {
   nonOpenedProjects: Project[];
   selectedProject: Project | null;
   setSelectedProject: (project: Project | null) => void;
-  fetchOpenedProjects: () => Promise<void>; // Exposed fetch function
-  fetchNonOpenedProjects: () => Promise<void>; // Exposed fetch function
+  fetchOpenedProjects: () => Promise<void>;
+  fetchNonOpenedProjects: () => Promise<void>;
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
@@ -32,7 +32,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
       const response = await axios.get(
         "http://localhost:5000/api/projects/opened"
       );
-      const openedProjects: Project[] = response.data.opened_projects; // Explicitly typed array
+      const openedProjects: Project[] = response.data.opened_projects;
       setOpenedProjects(openedProjects);
 
       // Find the currently selected project

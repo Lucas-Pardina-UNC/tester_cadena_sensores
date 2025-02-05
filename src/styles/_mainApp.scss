@@ -1,0 +1,33 @@
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #1e1e1e; // VS Code dark background color
+    color: #d4d4d4; // VS Code light text color
+  
+    &__header {
+      background-color: #007acc; // VS Code blue header color
+      padding: 16px;
+      text-align: center;
+      color: #ffffff; // White text color
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); // Subtle shadow
+    }
+  
+    &__main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+  }
+  
+  // Responsive design
+  @media (max-width: 768px) {
+    .app__header {
+      padding: 12px;
+    }
+  
+    .app__main {
+      padding: 8px;
+    }
+  }
