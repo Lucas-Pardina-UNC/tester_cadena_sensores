@@ -1,4 +1,4 @@
-
+from typing import Union
 from flask import Blueprint, jsonify, request
 import os
 import json
@@ -6,6 +6,19 @@ import json
 from .projects import load_projects
 
 chains_bp = Blueprint("chains", __name__)
+
+class Slave:
+    def __init__(self, slave_id : int, sensor_id: Union[str, int], sensor_type: str):
+        self.slave_id = slave_id
+        self.sensor_id = sensor_id
+        self.sensor_type = sensor_type
+
+    def to_dict(self):
+        return {
+            "slave_id": self.slave_id,
+            "sensor_id": self.sensor_id,
+            "sensor_type": self.sensor_type
+        }
 
 @chains_bp.route('/add-chain/<project_id>', methods=['POST'])
 def add_sensor_chain(project_id):
@@ -21,6 +34,12 @@ def add_sensor_chain(project_id):
         "chain_protocol": data.get("chain_protocol"),
         "chain_available_slaves": data.get("chain_available_slaves")
     }
+
+    # For aerials, slave 8 has sensor_id = "TE" as default, but in truth it contains the calibration coefficients => sensor_id = "COEF"
+    if(chain_data["chain_protocol"] == "legacy"):
+        if((chain_data["chain_available_slaves"][0]["sensor_id"] == "TE") and (chain_data["chain_available_slaves"][1]["sensor_id"] == "HU") and (chain_data["chain_available_slaves"][2]["sensor_id"] == "PA") and (chain_data["chain_available_slaves"][3]["sensor_id"] == "TE")):
+            chain_data["chain_available_slaves"][3]["sensor_id"] = "COEF"
+            chain_data["chain_available_slaves"][3]["sensor_type"] = "Calibration_Coefficients"
 
     # Load existing projects
     projects = load_projects()

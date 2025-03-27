@@ -8,6 +8,11 @@ import React, {
 import axios from "axios";
 import { useProjectContext } from "./ProjectContext";
 
+interface Slave {
+  slave_id: number;
+  sensor_id: string;
+  sensor_type: string;
+}
 interface Chain {
   id: string;
   chain_port: string;
@@ -17,7 +22,7 @@ interface Chain {
   stopbits: number;
   timeout: number;
   chain_protocol: string;
-  chain_available_slaves: number[];
+  chain_available_slaves: Slave[];
   result_columns: string;
   fetchChainsData: (projectFolder: string) => Promise<void>; // Exposed fetch function
 }

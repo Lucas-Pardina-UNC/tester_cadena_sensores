@@ -7,6 +7,11 @@ interface AutoTestModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
+interface Slave {
+  slave_id: number;
+  sensor_id: string;
+  sensor_type: string;
+}
 
 const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState("Per Time Period");
@@ -20,10 +25,9 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
 
   /* const [selectedChain, setSelectedChain] = useState(""); */
   const [selectedChain, setSelectedChain] = useState("");
-  const [responsiveSlaves, setResponsiveSlaves] = useState<number[]>([]);
+  const [responsiveSlaves, setResponsiveSlaves] = useState<Slave[]>([]);
   const [selectedSlave, setSelectedSlave] = useState("");
   const [sensorValue, setSensorValue] = useState("");
-  const [sensorType, setSensorType] = useState("");
   const [days, setDays] = useState(0);
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
@@ -35,12 +39,6 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
   const { chains, fetchChainsData } = useChainsContext();
   const { selectedProject } = useProjectContext();
   const project_folder = selectedProject?.folder + "/config.json";
-
-  /* useEffect(() => {
-    fetchChainsData();
-  }, [fetchChainsData]); */
-
-  const clearSensorValue = () => setSensorValue("");
 
   const handleTimeChange = (
     value: number,
@@ -91,23 +89,6 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
       setSensorValue(response.data.temperature);
     } catch (error) {
       console.error("Error reading sensor:", error);
-    }
-  };
-
-  const handleGetSensorIdAndType = async () => {
-    try {
-      const response = await axios.post(
-        "http://localhost:5000/get_sensor_id_and_type",
-        {
-          file_path: project_folder,
-          chain_id: parseInt(selectedChain),
-          slave_id: parseInt(selectedSlave),
-        }
-      );
-      //console.log(response.data);
-      setSensorType(response.data.sensor_type);
-    } catch (error) {
-      console.error("Error getting sensor ID and type:", error);
     }
   };
 
@@ -399,26 +380,19 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
                 >
                   <option value="">-- Select Slave --</option>
                   {responsiveSlaves.map((slave) => (
-                    <option key={slave} value={slave}>
-                      {slave}
+                    <option key={slave.slave_id} value={slave.slave_id}>
+                      {slave.slave_id}
                     </option>
                   ))}
                 </select>
               </label>
               <button onClick={handleReadSensor}>Read Sensor</button>
-              <button onClick={handleGetSensorIdAndType}>
-                Get Sensor ID & Type
-              </button>
-              <div className="sensor-value">
-                <strong>Sensor Value:</strong> {sensorValue}
-              </div>
-              <div className="sensor-type">
-                <strong>Sensor Type:</strong> {sensorType}
-              </div>
-              <button onClick={clearSensorValue}>Clear</button>
             </div>
           )}
         </div>
+        <button className="auto-test-button" onClick={onClose}>
+          Cancel
+        </button>
       </div>
     </div>
   );

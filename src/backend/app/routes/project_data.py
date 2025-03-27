@@ -1,8 +1,22 @@
 import json
 import uuid
+from typing import Union
 from pymodbus.client import AsyncModbusSerialClient
-from pymodbus import FramerType
+from framer_selector import get_framer #from pymodbus import FramerType
 
+Framer = get_framer()
+class Slave:
+    def __init__(self, slave_id : int, sensor_id: Union[str, int], sensor_type: str):
+        self.slave_id = slave_id
+        self.sensor_id = sensor_id
+        self.sensor_type = sensor_type
+
+    def to_dict(self):
+        return {
+            "slave_id": self.slave_id,
+            "sensor_id": self.sensor_id,
+            "sensor_type": self.sensor_type
+        }
 class Chain:
     def __init__(self, chain_port, baudrate, bytesize, parity, stopbits, timeout, chain_protocol, chain_available_slaves, chain_id, result_columns):
         self.chain_port = chain_port
@@ -17,10 +31,16 @@ class Chain:
         self.result_columns = result_columns
         self.chain_client = None  # Placeholder for the client object
 
+        # Convert dictionaries back into Slave objects
+        self.chain_available_slaves = [
+            Slave(**slave) if isinstance(slave, dict) else slave
+            for slave in chain_available_slaves
+        ]
+
         if self.chain_protocol == "modbus":
             self.chain_client = AsyncModbusSerialClient(
                 port=self.chain_port,
-                framer=FramerType.RTU,
+                framer=Framer,  # Use Framer (framer_selector.py) instead of FramerType.RTU for retrocompatiiility
                 baudrate=self.baudrate,
                 bytesize=self.bytesize,
                 parity=self.parity,

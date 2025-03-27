@@ -3,6 +3,11 @@ import axios from "axios";
 import { useChainsContext } from "./ChainsContext";
 import { useAlert } from "./CustomAlertContext";
 
+interface Slave {
+  slave_id: number;
+  sensor_id: string;
+  sensor_type: string;
+}
 interface ChainProps {
   chain: {
     id: string;
@@ -13,7 +18,7 @@ interface ChainProps {
     stopbits: number;
     timeout: number;
     chain_protocol: string;
-    chain_available_slaves: number[];
+    chain_available_slaves: Slave[];
     result_columns: string;
   };
   isExpanded: boolean;
@@ -23,6 +28,8 @@ const Chain: React.FC<ChainProps> = ({ chain }) => {
   const [expanded, setExpanded] = useState(false);
   const [editableChain, setEditableChain] = useState(chain);
   const { fetchChainsData } = useChainsContext();
+  const [slaveIDsList, setSlaveIDsList] = useState<number[]>([]);
+  const [slaveTypesList, setSlaveTypesList] = useState<string[]>([]);
   const { showAlert } = useAlert();
   const [comPorts, setComPorts] = useState<
     { device: string; description: string }[]
@@ -101,6 +108,15 @@ const Chain: React.FC<ChainProps> = ({ chain }) => {
   useEffect(() => {
     setExpanded(false); // Collapse when chain changes
     setEditableChain(chain); // Update the editableChain state to reflect the new chain
+    const slaveIds = chain.chain_available_slaves.map(
+      (slave) => slave.slave_id
+    );
+    const sensorTypes = chain.chain_available_slaves.map(
+      (slave) => slave.sensor_type
+    );
+
+    setSlaveIDsList(slaveIds);
+    setSlaveTypesList(sensorTypes);
   }, [chain]);
 
   useEffect(() => {
@@ -243,11 +259,22 @@ const Chain: React.FC<ChainProps> = ({ chain }) => {
           </div>
           <div>
             <label>
-              Available Slaves:{" "}
+              Available Slaves IDs:{" "}
               <input
                 type="text"
                 name="chain_available_slaves"
-                value={editableChain.chain_available_slaves.join(",")}
+                value={slaveIDsList.join(",")}
+                onChange={handleInputChange}
+              />
+            </label>
+          </div>
+          <div>
+            <label>
+              Available Slaves Types:{" "}
+              <input
+                type="text"
+                name="chain_available_slaves"
+                value={slaveTypesList.join(",")}
                 onChange={handleInputChange}
               />
             </label>
