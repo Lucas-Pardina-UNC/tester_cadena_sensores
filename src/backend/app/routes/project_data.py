@@ -2,7 +2,7 @@ import json
 import uuid
 from typing import Union
 from pymodbus.client import AsyncModbusSerialClient
-from framer_selector import get_framer #from pymodbus import FramerType
+from .framer_selector import get_framer #from pymodbus import FramerType
 
 Framer = get_framer()
 class Slave:

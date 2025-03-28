@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from typing import List, Union
 from pymodbus.client import AsyncModbusSerialClient
-from framer_selector import get_framer #from pymodbus import FramerType
+from .framer_selector import get_framer #from pymodbus import FramerType
 from .modbus_functions import read_input_register
 from .legacy_commands import legacy_measurement, legacy_get_sensor_id
 from .conversion import get_sensor_type
