@@ -1,0 +1,151 @@
+/* AddChainModal Styles */
+.add-chain-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .add-chain-modal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 1.5rem 1rem 1.5rem;
+    background-color: #fff;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 100%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .chain-field {
+    display: grid;
+    grid-template-columns: 1fr 2.7fr;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+     input {
+        width: 95.5%;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        padding-right: 0;
+        padding-left: 3.5%;
+        margin-bottom: 1rem;
+        border: 0.5px solid #ccc;
+      }
+    button {
+      margin: 1rem;
+    }
+  }
+  
+  .add-chain-modal h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .add-chain-modal label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  
+/*   .add-chain-modal select,
+  .add-chain-modal input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  } */
+
+  .add-chain-modal select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .add-chain-modal button {
+    padding: 10px 15px;
+    border: none;
+    margin: 0.5rem;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  
+  .add-chain-modal .modal-buttons {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .add-chain-modal .modal-buttons button {
+    background-color: #007bff;
+    color: #fff;
+  }
+  
+  .add-chain-modal .modal-buttons button:hover {
+    background-color: #0056b3;
+  }
+  
+  .add-chain-modal .modal-buttons button:disabled {
+    background-color: #ccc;
+  }
+  
+  .add-chain-modal .modal-buttons button:first-child {
+    background-color: #dc3545;
+  }
+  
+  .add-chain-modal .modal-buttons button:first-child:hover {
+    background-color: #c82333;
+  }
+  
+  .add-chain-modal input[type="number"] {
+    -moz-appearance: textfield; /* Remove up/down arrows in number input for a clean UI */
+  }
+  
+  .add-chain-modal p {
+    text-align: center;
+    font-size: 14px;
+  }
+  
+  .add-chain-modal p.red {
+    color: red;
+  }
+  
+  .add-chain-modal p.green {
+    color: green;
+  }
+  
+  /* Additional styles for Slave Detection modal */
+  .slave-detection-modal {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 500px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .slave-detection-modal button {
+    background-color: #28a745;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .slave-detection-modal button:hover {
+    background-color: #218838;
+  }
+  
