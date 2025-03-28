@@ -9,6 +9,20 @@ from .calc_sheets import *
 from .legacy_commands import *
 from .project_data import *
 from .conversion import *
+from .read_sensors import handle_sensor_reading_modbus, handle_sensor_reading_legacy
+
+class Slave:
+    def __init__(self, slave_id : int, sensor_id: Union[str, int], sensor_type: str):
+        self.slave_id = slave_id
+        self.sensor_id = sensor_id
+        self.sensor_type = sensor_type
+
+    def to_dict(self):
+        return {
+            "slave_id": self.slave_id,
+            "sensor_id": self.sensor_id,
+            "sensor_type": self.sensor_type
+        }
 
 auto_test_bp = Blueprint("auto_test", __name__)
 
@@ -73,8 +87,13 @@ async def auto_test_by_cycles():
 
         excel_file_path = project.project_folder + "/auto-test.xlsx"
         num_chains = project.num_chains
-        chain_protocol = project.chains[0].chain_protocol
-        available_slaves = project.chains[0].chain_available_slaves
+        available_slaves_objects = project.chains[0].chain_available_slaves
+        available_slaves = []
+        
+        for slave in available_slaves_objects:
+            available_slaves.append(slave.slave_id)
+
+        #print(f"Available slaves: {available_slaves}", flush=True)
 
         for j in range(project.num_chains):
             if(project.chains[j].chain_protocol == "modbus"):
@@ -87,7 +106,10 @@ async def auto_test_by_cycles():
         for i in range(num_cycles):
             #print(f"Ciclo: {i}")
             for j in range(project.num_chains):
+                #await auto_test_cycle(project.chains[j].chain_client, project.chains[j].chain_port, project.chains[j].chain_protocol, available_slaves, log_data, excel_file_path, j)
                 await auto_test_cycle(project.chains[j].chain_client, project.chains[j].chain_port, project.chains[j].chain_protocol, project.chains[j].chain_available_slaves, log_data, excel_file_path, j)
+
+        #return jsonify({"status": "success"})
 
         # Cierra las conexiones si están abiertas
         for i in range(num_chains):
@@ -99,7 +121,8 @@ async def auto_test_by_cycles():
                         pass
                         # print(f"Error al cerrar el cliente: {e}")
 
-    return jsonify({"status": "success", "num_chains": num_chains, "chain_protocol": chain_protocol, "available_slaves": available_slaves})
+    #return jsonify({"status": "success", "num_chains": num_chains, "chain_protocol": chain_protocol, "available_slaves": available_slaves})
+    return jsonify({"status": "success"})
 
 @auto_test_bp.route("/auto_test_with_interval", methods=["POST"])
 async def auto_test_with_interval():
@@ -311,6 +334,10 @@ async def read_slave_id():
                         sensor_type = "Air sensor"
                     elif sensor_id == 100:
                         sensor_type = "Energy sensor"
+                    elif sensor_id == 400:
+                        sensor_type = "Radiation sensor"
+                    elif sensor_id == 500:
+                        sensor_type = "Anemometer"
                     elif sensor_id == 1000:
                         sensor_type = "Probe"
                     else:
@@ -342,39 +369,24 @@ async def read_slave_id():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-async def auto_test_cycle(client, chain_port, chain_protocol, responsive_slaves: List[int], log_data: List[Tuple[int, int, float]], filepath , chain_id: int = 0) -> None:
+async def auto_test_cycle(client, chain_port, chain_protocol, responsive_slaves: List[Slave], log_data: List[Tuple[int, int, float]], filepath , chain_id: int = 0) -> None:
     """A single cycle of the auto-test, logging temperatures for responsive slaves."""
     log_data.clear()  # Clear log_data at the beginning of each cycle
 
-    for slave_id in responsive_slaves:
+    for slave in responsive_slaves:
+        slave_id = slave.slave_id
+        sensor_id = slave.sensor_id
         if chain_protocol == "modbus":
-            try:
-                write_response = await client.write_coil(0, True, slave=slave_id)
-                if not write_response.isError():
-                    read_response = await client.read_input_registers(2, count=1, slave=slave_id)
-                    if not read_response.isError():
-                        ADC_value = read_response.registers[0]
-                        temperature = adc_to_temperature(ADC_value)
-                        log_data.append((slave_id, ADC_value, temperature))
-                    else:
-                        print(f"Error al leer el registro de entrada 2 para el esclavo {slave_id}")  
-                else:
-                    print(f"Error al escribir en la bobina 0 para el esclavo {slave_id}")    
-            except ModbusException:
-                continue
+            log_data = await handle_sensor_reading_modbus(sensor_id, slave_id, client)
         elif chain_protocol == "legacy": 
-            legacy_value = legacy_measurement(chain_port, slave_id)
-            if legacy_value:
-                temperature = adc_to_temperature(int(legacy_value))
-            else:
-                temperature = 4444
-            log_data.append((slave_id, legacy_value, temperature))
+            if(sensor_id != "COEF"):
+                log_data = await handle_sensor_reading_legacy(sensor_id, chain_port, slave_id)
 
     # Obtain current date/time
     current_timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
     
     # Log to excel
-    log_to_excel(log_data, current_timestamp, chain_id, filepath)
+    #log_to_excel(log_data, current_timestamp, chain_id, filepath)
 
 
 @auto_test_bp.route("/load_project", methods=["POST"])
