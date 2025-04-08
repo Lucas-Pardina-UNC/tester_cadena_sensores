@@ -32,7 +32,8 @@ def add_sensor_chain(project_id):
         "stopbits": data.get("stopbits"),
         "timeout": data.get("timeout"),
         "chain_protocol": data.get("chain_protocol"),
-        "chain_available_slaves": data.get("chain_available_slaves")
+        "chain_available_slaves": data.get("chain_available_slaves"),
+        "chain_types" : []
     }
 
     # For aerials, slave 8 has sensor_id = "TE" as default, but in truth it contains the calibration coefficients => sensor_id = "COEF"
@@ -74,6 +75,19 @@ def add_sensor_chain(project_id):
     config_data["chains"].append(chain_data)
     config_data["num_chains"] += 1
 
+    # Determine all types of sensors in the chain AKA chain_types
+    # Determine all types of sensors in the chain AKA chain_types
+    chain_types_set = set()
+    for slave in chain_data["chain_available_slaves"]:
+        sensor_id = slave.get("sensor_id")
+        sensor_type = slave.get("sensor_type")
+        general_type = resolve_general_type(sensor_id, sensor_type)
+
+        if general_type:
+            chain_types_set.add(general_type)
+
+    chain_data["chain_types"] = list(chain_types_set)
+    
     # Save the updated config
     with open(config_file_path, "w") as config_file:
         json.dump(config_data, config_file, indent=4)
@@ -224,3 +238,44 @@ def delete_sensor_chain(chain_id):
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+    
+# Mapping from sensor_id to sensor_type
+SENSOR_TYPE_MAP = {
+    100: "Energy",
+    200: "Air",
+    400: "Radiation",
+    500: "Anemometer",
+    900: "Temperature",
+    999: "Temperature",
+    1000: "Probe",
+    "EP": "Energy (Panel)",
+    "EB": "Energy (Battery)",
+    "EC": "Energy (Consumption)",
+    "HU": "Humidity",
+    "PE": "Pressure",
+    "PA": "Pressure",
+    "TE": "Temperature",
+    "RD": "Direct Radiation",
+    "RN": "Net Radiation",
+    "WD": "Wind Direction",
+    "WS": "Wind Speed",
+}
+
+# Function to resolve general chain type from a specific sensor_type
+def resolve_general_type(sensor_id, fallback_sensor_type):
+    specific_type = SENSOR_TYPE_MAP.get(sensor_id, fallback_sensor_type)
+
+    if specific_type:
+        if specific_type.startswith("Energy"):
+            return "Energy"
+        elif specific_type == "Temperature":
+            return "Temperature"
+        elif specific_type == "Probe":
+            return "Probe"
+        elif specific_type in ["Air", "Humidity", "Pressure"]:
+            return "Air"
+        elif specific_type in ["Radiation", "Direct Radiation", "Net Radiation"]:
+            return "Radiation"
+        elif specific_type in ["Anemometer", "Wind Direction", "Wind Speed"]:
+            return "Anemometer"
+    return None

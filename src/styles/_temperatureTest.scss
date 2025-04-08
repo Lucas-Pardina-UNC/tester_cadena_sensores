@@ -1,0 +1,122 @@
+.fields-description {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    column-gap: 1rem;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    padding-bottom: 1rem;
+}
+
+.temperature-test-results {
+    display: grid;
+    grid-template-columns: 0.5fr 1fr 0.5fr;
+    column-gap: 1rem;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+.fields-description-adc {
+    display: grid;
+    grid-template-columns: 0.5fr 1fr 0.5fr 0.5fr;
+    column-gap: 1rem;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 1rem;
+}
+
+.temperature-test-results-adc {
+    display: grid;
+    grid-template-columns: 0.5fr 1fr 0.5fr 0.5fr;
+    column-gap: 1rem;
+    align-items: center;
+    justify-content: center;
+    //margin-top: 2rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    .slave-id-field{
+        display: flex;
+        justify-content: center;
+        margin: 0.2rem;
+        label {
+            //width: 40%;
+            margin-bottom: 0.2rem;
+            //padding-bottom: 0.2rem;
+        }
+    }
+    .temperature-field{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        input {
+            width: 50%;
+            margin-bottom: 0.2rem;
+            text-align: center;
+        }
+    }
+
+}
+
+.adc-fields {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    input {
+        width: 50%;
+        margin-bottom: 0.2rem;
+        text-align: center;
+    }
+    .temperature-field{
+        display: flex;
+        flex-direction: column;
+        //justify-content: flex-start;
+        input {
+            width: 50%;
+            margin-bottom: 0.2rem;
+            text-align: center;
+        }
+    }
+    
+    
+}
+
+
+
+.timestamp-fields, .temperature-fields, .adc-fields{
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+.timestamp-field{
+    input {
+        //width: 40%;
+        margin-bottom: 0.2rem;
+    }
+}
+
+.temperature-field{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    input {
+        width: 50%;
+        margin-bottom: 0.2rem;
+        text-align: center;
+    }
+}
+
+.slave-id-field{
+    display: flex;
+    justify-content: flex-end;
+    margin: 0.2rem;
+    label {
+        //width: 40%;
+        margin-bottom: 0.2rem;
+        //padding-bottom: 0.2rem;
+    }
+}

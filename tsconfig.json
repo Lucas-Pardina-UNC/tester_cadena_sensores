@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "types": ["electron"],
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
@@ -30,7 +32,7 @@
       "styles/*": ["./src/styles/*"],
       "types/*": ["./src/types/*"],
     },
-    "typeRoots": ["./node_modules/@types", "./src/types"]
+    //"typeRoots": ["./node_modules/@types", "./src/types"]
   },
   "include": ["src", "electron", "src/**/*", "src/types/global.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]

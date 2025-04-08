@@ -2,6 +2,8 @@
 from flask import jsonify
 from pymodbus import ModbusException
 from pymodbus.exceptions import ModbusException
+from datetime import datetime, timedelta
+from datetime import datetime
 from .legacy_commands import *
 from .conversion import *
 
@@ -88,7 +90,7 @@ async def get_history_measurement_modbus(client, slave_id, measurement, measure_
         if not read_value.isError():
             converted_value = adc_to_energy_voltage_value(read_value.registers[0]) if measure_type == "voltage" else adc_to_energy_current_value(read_value.registers[0])
             history_values.append(converted_value)
-            print(f"{measurement.capitalize()} {measure_type.capitalize()} History [{i}]: {converted_value} | ADC value: {read_value.registers[0]}", flush=True)
+            #print(f"{measurement.capitalize()} {measure_type.capitalize()} History [{i}]: {converted_value} | ADC value: {read_value.registers[0]}", flush=True)
             log_data.append((slave_id, converted_value))
     
     return history_values
@@ -104,7 +106,7 @@ async def get_max_measurement_modbus(client, slave_id, measurement, measure_type
     read_value = await client.read_input_registers(register, count=1, slave=slave_id)
     if not read_value.isError():
         converted_value = adc_to_energy_voltage_value(read_value.registers[0]) if measure_type == "voltage" else adc_to_energy_current_value(read_value.registers[0])
-        print(f"{measurement.capitalize()} {measure_type.capitalize()} Max: {converted_value}", flush=True)
+        #print(f"{measurement.capitalize()} {measure_type.capitalize()} Max: {converted_value}", flush=True)
         log_data.append((slave_id, converted_value))
         return converted_value
     return None
@@ -120,7 +122,7 @@ async def get_min_measurement_modbus(client, slave_id, measurement, measure_type
     read_value = await client.read_input_registers(register, count=1, slave=slave_id)
     if not read_value.isError():
         converted_value = adc_to_energy_voltage_value(read_value.registers[0]) if measure_type == "voltage" else adc_to_energy_current_value(read_value.registers[0])
-        print(f"{measurement.capitalize()} {measure_type.capitalize()} Min: {converted_value}", flush=True)
+        #print(f"{measurement.capitalize()} {measure_type.capitalize()} Min: {converted_value}", flush=True)
         log_data.append((slave_id, converted_value))
         return converted_value
     return None
@@ -136,7 +138,7 @@ async def get_mean_measurement_modbus(client, slave_id, measurement, measure_typ
     read_value = await client.read_input_registers(register, count=1, slave=slave_id)
     if not read_value.isError():
         converted_value = adc_to_energy_voltage_value(read_value.registers[0]) if measure_type == "voltage" else adc_to_energy_current_value(read_value.registers[0])
-        print(f"{measurement.capitalize()} {measure_type.capitalize()} Mean: {converted_value}", flush=True)
+        #print(f"{measurement.capitalize()} {measure_type.capitalize()} Mean: {converted_value}", flush=True)
         log_data.append((slave_id, converted_value))
         return converted_value
     return None
@@ -615,7 +617,8 @@ async def read_modbus_temperature_chain_sensor(slave_id, client):
                 if not read_response.isError():
                     ADC_value = read_response.registers[0]
                     temperature = adc_to_temperature(ADC_value)
-                    log_data.append((slave_id, ADC_value, temperature))
+                    current_timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+                    log_data.append((slave_id, current_timestamp, ADC_value, temperature))
                     print(f"Cadena de Temperatura, {log_data}", flush=True)
                 else:
                     print(f"Error al leer el registro de entrada 2 para el esclavo {slave_id}")  

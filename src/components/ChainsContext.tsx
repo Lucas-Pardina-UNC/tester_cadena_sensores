@@ -25,6 +25,7 @@ interface Chain {
   chain_available_slaves: Slave[];
   result_columns: string;
   fetchChainsData: (projectFolder: string) => Promise<void>; // Exposed fetch function
+  chain_types: string[];
 }
 
 interface ChainsContextType {

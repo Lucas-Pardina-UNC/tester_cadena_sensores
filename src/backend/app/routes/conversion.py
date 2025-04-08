@@ -92,21 +92,23 @@ def adc_to_air_pressure(adc_value_temp_comp, adc_value_pressure, coefficients):
     return air_pressure
 
 def adc_to_energy_current_value(adc_value):
-    
-    if(adc_value < 35534):
+    if adc_value < 35534:
         i_energy_value = adc_value / 10.0
+        i_energy_value = round(i_energy_value, 3)  # Limit to 3 decimal digits
     else:
         i_energy_value = 4444
 
     return i_energy_value
 
-def adc_to_energy_voltage_value(adc_value) :
-    if(adc_value < 35534):
+def adc_to_energy_voltage_value(adc_value):
+    if adc_value < 35534:
         v_energy_value = adc_value * 0.004
+        v_energy_value = round(v_energy_value, 3)  # Limit to 3 decimal digits
     else:
         v_energy_value = 4444
 
     return v_energy_value
+
 # ----------------------------------- Sonda -----------------------------------
 def adc_to_pH_value(adc_value):
     pH_hex = adc_value
