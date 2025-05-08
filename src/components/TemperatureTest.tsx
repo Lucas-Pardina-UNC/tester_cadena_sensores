@@ -36,14 +36,10 @@ const TemperatureTest: React.FC<TemperatureTestProps> = ({
         const logData = response.data.log_data;
 
         // Extract timestamps, temperatures, and ADC values from logData
-        const newTimestamps = logData.map(
-          (entry: any) => entry[0][1] // Extract the timestamp
-        );
+        const newTimestamps = logData.map((entry: any) => entry[0]); // Extract the timestamp
+        const newAdcValues = logData.map((entry: any) => entry[4].toString()); // Extract the ADC value and convert to string
         const newTemperatures = logData.map(
-          (entry: any) => entry[0][3].toString() // Extract the temperature and convert to string
-        );
-        const newAdcValues = logData.map(
-          (entry: any) => entry[0][2].toString() // Extract the ADC value and convert to string
+          (entry: any) => entry[5].toFixed(2) // Extract the temperature and format to 2 decimal places
         );
 
         setTimestamps(newTimestamps);
@@ -56,8 +52,8 @@ const TemperatureTest: React.FC<TemperatureTestProps> = ({
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
+    <div className="temperature-test-modal-overlay">
+      <div className="temperature-test-modal">
         <h2>Temperature Test</h2>
         <p>Sensor Chain Serial Number: 0000</p>
         <div className="adc-checkbox">
