@@ -66,8 +66,6 @@ def legacy_wind_measurement(com_port, slave: int) -> str:
             data_command = f"L#{slave:03}D\r\n\r\n"
             response = send_command(ser, data_command)
 
-            print(f"response legacy measurement: {response}", flush=True) # Para sensor de dirección y velocidad del viento
-
             # Extract the number after "L>"
             match = re.search(r'L>(\d+)', response)
             if match:

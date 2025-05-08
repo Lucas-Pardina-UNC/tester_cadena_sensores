@@ -49,6 +49,14 @@ def adc_to_direct_radiation(adc_value):
 
     return direct_radiation
 
+def adc_to_accurate_direct_radiation(adc_value, offset=368, gain=0.42):
+    if(adc_value != 4444):
+        direct_radiation = (adc_value - offset) * gain
+    else:
+        direct_radiation = 0
+
+    return direct_radiation
+
 def adc_to_net_radiation(adc_value):
     if(adc_value != 4444 and adc_value > 2000 and adc_value < 4000):
         net_radiation = ((((adc_value/4096)*4096)-2541)/100)/0.013

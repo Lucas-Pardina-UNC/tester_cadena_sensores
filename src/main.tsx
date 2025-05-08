@@ -10,5 +10,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 
 // Use contextBridge
 window.ipcRenderer.on("main-process-message", (_event, message) => {
+  //console.log("Hola soy main.tsx");
   console.log(message);
 });

@@ -30,7 +30,7 @@
       "objects/*": ["./src/data/objects/*"],
       "utilities/*": ["./src/utilities/*"],
       "styles/*": ["./src/styles/*"],
-      "types/*": ["./src/types/*"],
+      "types/*": ["./src/types/*"]
     },
     //"typeRoots": ["./node_modules/@types", "./src/types"]
   },

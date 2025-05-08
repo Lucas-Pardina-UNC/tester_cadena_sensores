@@ -71,6 +71,7 @@ function startPythonBackend() {
   });
 
   pythonProcess.on('close', (code) => {
+    console.log(`python on close`);
     console.log(`Python process exited with code ${code}`);
     pythonProcess = null; // Clean up reference
   });
@@ -78,6 +79,7 @@ function startPythonBackend() {
 
 function stopPythonBackend() {
   if (pythonProcess) {
+    console.log("Stopping Python backend...");
     pythonProcess.kill();
     pythonProcess = null;
   }

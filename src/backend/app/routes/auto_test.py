@@ -3,6 +3,8 @@ from typing import List, Tuple
 import asyncio
 from datetime import datetime, timedelta
 from datetime import datetime
+import csv
+import os
 from pymodbus import ModbusException
 from pymodbus.exceptions import ModbusException
 from .calc_sheets import *
@@ -41,6 +43,7 @@ async def auto_test():
         project = get_project_instance()
 
         excel_file_path = project.project_folder + "/auto-test.xlsx"
+        
         num_chains = project.num_chains
         chain_protocol = project.chains[0].chain_protocol
         available_slaves = project.chains[0].chain_available_slaves
@@ -74,9 +77,10 @@ async def auto_test():
 async def auto_test_by_cycles():
     data = request.json
     file_path = data.get("file_path")
+    project_folder_path = os.path.dirname(file_path)
     num_cycles = data.get("num_cycles", 3)  # Default to 3 cycles if not provided
     log_data = []
-    
+
     if not file_path:
         return jsonify({"error": "file_path is required"}), 400
     else:
@@ -107,7 +111,7 @@ async def auto_test_by_cycles():
             #print(f"Ciclo: {i}")
             for j in range(project.num_chains):
                 #await auto_test_cycle(project.chains[j].chain_client, project.chains[j].chain_port, project.chains[j].chain_protocol, available_slaves, log_data, excel_file_path, j)
-                await auto_test_cycle(project.chains[j].chain_client, project.chains[j].chain_port, project.chains[j].chain_protocol, project.chains[j].chain_available_slaves, log_data, excel_file_path, j)
+                log_data.append(await auto_test_cycle(project.chains[j].chain_client, project.chains[j].chain_port, project.chains[j].chain_protocol, project.chains[j].chain_available_slaves, log_data, project_folder_path, j))
 
         #return jsonify({"status": "success"})
 
@@ -122,6 +126,7 @@ async def auto_test_by_cycles():
                         # print(f"Error al cerrar el cliente: {e}")
 
     #return jsonify({"status": "success", "num_chains": num_chains, "chain_protocol": chain_protocol, "available_slaves": available_slaves})
+    #print(f"Log data: {log_data}", flush=True) # se imprime en auto_test_cycle
     return jsonify({"status": "success"})
 
 @auto_test_bp.route("/auto_test_with_interval", methods=["POST"])
@@ -135,6 +140,7 @@ async def auto_test_with_interval():
     """
     data = request.json
     file_path = data.get("file_path")
+    project_folder_path = os.path.dirname(file_path)
     total_duration = data.get("total_duration")  # in seconds
     interval = data.get("interval")  # in seconds
 
@@ -179,7 +185,7 @@ async def auto_test_with_interval():
                     project.chains[j].chain_protocol,
                     project.chains[j].chain_available_slaves,
                     log_data,
-                    excel_file_path,
+                    project_folder_path,
                     j
                 )
             await asyncio.sleep(interval)  # Wait for the specified interval
@@ -205,15 +211,15 @@ async def auto_test_with_interval():
 async def single_test():
     data = request.json
     file_path = data.get("file_path")
+    project_folder_path = os.path.dirname(file_path)
     s_chain_id = data.get("chain_id")
+    gain = data.get("gain")
+    offset = data.get("offset")
     chain_id = int(s_chain_id) - 1  # Convert to zero-based index
     log_data = []
-    #slave_ids = []
-    #timestamps = []
-    #adc_values = []
-    #temperatures = []
     
     print("Llegue al endpoint single_test", flush=True)
+    print(f"Me llego el filepath {file_path}", flush=True)
 
     if not file_path:
         return jsonify({"error": "file_path is required"}), 400
@@ -236,8 +242,12 @@ async def single_test():
                 print(f"Conexión exitosa en cadena {chain_id} - puerto {project.chains[chain_id].chain_port}.")
             else:
                 print(f"Error de conexión para la cadena {chain_id} - puerto {project.chains[chain_id].chain_port}.")
+
+        if "Radiation" in project.chains[chain_id].chain_types:
+            print("Radiation sensor detected", flush=True)
+            log_data = await auto_test_cycle(project.chains[chain_id].chain_client, project.chains[chain_id].chain_port, project.chains[chain_id].chain_protocol, project.chains[chain_id].chain_available_slaves, log_data, project_folder_path, chain_id, offset, gain)
         
-        log_data = await auto_test_cycle(project.chains[chain_id].chain_client, project.chains[chain_id].chain_port, project.chains[chain_id].chain_protocol, project.chains[chain_id].chain_available_slaves, log_data, excel_file_path, chain_id)
+        log_data = await auto_test_cycle(project.chains[chain_id].chain_client, project.chains[chain_id].chain_port, project.chains[chain_id].chain_protocol, project.chains[chain_id].chain_available_slaves, log_data, project_folder_path, chain_id)
 
         if(project.chains[chain_id].chain_protocol == "modbus"):
                 if project.chains[chain_id].chain_client.connected:
@@ -419,7 +429,7 @@ async def read_slave_id():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-async def auto_test_cycle(client, chain_port, chain_protocol, responsive_slaves: List[Slave], log_data: List[Tuple[int, int, float]], filepath , chain_id: int = 0) -> None:
+async def auto_test_cycle(client, chain_port, chain_protocol, responsive_slaves: List[Slave], log_data: List[Tuple[int, int, float]], filepath , chain_id: int = 0, offset: int = 0, gain: float = 0.0) -> None:
     """A single cycle of the auto-test, logging temperatures for responsive slaves."""
     log_data.clear()  # Clear log_data at the beginning of each cycle
     data = []
@@ -428,23 +438,37 @@ async def auto_test_cycle(client, chain_port, chain_protocol, responsive_slaves:
         slave_id = slave.slave_id
         sensor_id = slave.sensor_id
         if chain_protocol == "modbus":
-            data = await handle_sensor_reading_modbus(sensor_id, slave_id, client)
-            log_data.append(data)
+            data = await handle_sensor_reading_modbus(chain_id, sensor_id, slave_id, client)
+            #log_data.append(data)
         elif chain_protocol == "legacy": 
             if(sensor_id != "COEF"):
-                data = await handle_sensor_reading_legacy(sensor_id, chain_port, slave_id)
-                log_data.append(data)
+                data = await handle_sensor_reading_legacy(chain_id, sensor_id, chain_port, slave_id, offset, gain)
+                #log_data.append(data)
+        if isinstance(data, list):
+            log_data.extend(data)
+        else:
+            log_data.append(data)
 
-    # Obtain current date/time
-    current_timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    # Define the path where the file will be written
+    csv_filepath = filepath
+    csv_file = os.path.join(csv_filepath, "log_data.csv")
+    file_exists = os.path.isfile(csv_file)
+
+    # Print for debugging
+    print(f"Log data: {log_data}", flush=True)
+
+    # Write to CSV as rows
+    if log_data:
+        with open(csv_file, mode='a', newline='') as f:
+            writer = csv.writer(f)
+            if not file_exists:
+                # Write header only once
+                writer.writerow(["timestamp", "chain_id", "slave_id", "measurement_type", "adc-value", "converted-value"])
+            for row in log_data:
+                writer.writerow(row)
     
     return log_data
     
-
-    # Log to excel
-    #log_to_excel(log_data, current_timestamp, chain_id, filepath)
-
-
 @auto_test_bp.route("/load_project", methods=["POST"])
 async def load_project():
     """

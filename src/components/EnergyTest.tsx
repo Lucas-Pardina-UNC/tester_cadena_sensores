@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 
 interface EnergyTestProps {
@@ -95,6 +95,7 @@ const EnergyTest: React.FC<EnergyTestProps> = ({
     setBeaconStatus(" ");
     setVoltageChargeOn(" ");
     setTailCurrent(" ");
+
     try {
       const response = await axios.post("http://localhost:5000/single_test", {
         file_path: projectFolder,
@@ -103,65 +104,70 @@ const EnergyTest: React.FC<EnergyTestProps> = ({
 
       if (response.data.status === "success") {
         const logData = response.data.log_data;
-        // Parse logData and update state
+
+        const extractValue = (key: string) => {
+          const entry = logData.find((item: any) => item[3] === key);
+          return entry ? entry[5].toString() : " ";
+        };
+
+        const chargingStatusEntry = extractValue("Status_Charging");
+        const beaconStatusEntry = extractValue("Status_Beacon");
+        const voltageChargeOnEntry = extractValue("Status_Voltage_Charge_On");
+        const tailCurrentEntry = extractValue("Status_Tail_Current");
+
+        setChargingStatus(chargingStatusEntry);
+        setBeaconStatus(beaconStatusEntry);
+        setVoltageChargeOn(voltageChargeOnEntry);
+        setTailCurrent(tailCurrentEntry);
+
         const panel = {
-          voltageHistory: logData[0]
-            .slice(0, 8)
-            .map((entry: any) => entry[1].toString()),
-          maxVoltage: logData[0][8][1].toString(),
-          minVoltage: logData[0][9][1].toString(),
-          meanVoltage: logData[0][10][1].toString(),
-          currentHistory: logData[0]
-            .slice(11, 19)
-            .map((entry: any) => entry[1].toString()),
-          maxCurrent: logData[0][19][1].toString(),
-          minCurrent: logData[0][20][1].toString(),
-          meanCurrent: logData[0][21][1].toString(),
+          voltageHistory: Array.from({ length: 8 }, (_, i) =>
+            extractValue(`panel_voltage_history_${i}`)
+          ),
+          maxVoltage: extractValue("panel_voltage_max"),
+          minVoltage: extractValue("panel_voltage_min"),
+          meanVoltage: extractValue("panel_voltage_mean"),
+          currentHistory: Array.from({ length: 8 }, (_, i) =>
+            extractValue(`panel_current_history_${i}`)
+          ),
+          maxCurrent: extractValue("panel_current_max"),
+          minCurrent: extractValue("panel_current_min"),
+          meanCurrent: extractValue("panel_current_mean"),
         };
 
         const battery = {
-          voltageHistory: logData[0]
-            .slice(22, 30)
-            .map((entry: any) => entry[1].toString()),
-          maxVoltage: logData[0][30][1].toString(),
-          minVoltage: logData[0][31][1].toString(),
-          meanVoltage: logData[0][32][1].toString(),
-          currentHistory: logData[0]
-            .slice(33, 41)
-            .map((entry: any) => entry[1].toString()),
-          maxCurrent: logData[0][41][1].toString(),
-          minCurrent: logData[0][42][1].toString(),
-          meanCurrent: logData[0][43][1].toString(),
+          voltageHistory: Array.from({ length: 8 }, (_, i) =>
+            extractValue(`battery_voltage_history_${i}`)
+          ),
+          maxVoltage: extractValue("battery_voltage_max"),
+          minVoltage: extractValue("battery_voltage_min"),
+          meanVoltage: extractValue("battery_voltage_mean"),
+          currentHistory: Array.from({ length: 8 }, (_, i) =>
+            extractValue(`battery_current_history_${i}`)
+          ),
+          maxCurrent: extractValue("battery_current_max"),
+          minCurrent: extractValue("battery_current_min"),
+          meanCurrent: extractValue("battery_current_mean"),
         };
 
         const consumption = {
-          voltageHistory: logData[0]
-            .slice(44, 52)
-            .map((entry: any) => entry[1].toString()),
-          maxVoltage: logData[0][52][1].toString(),
-          minVoltage: logData[0][53][1].toString(),
-          meanVoltage: logData[0][54][1].toString(),
-          currentHistory: logData[0]
-            .slice(55, 63)
-            .map((entry: any) => entry[1].toString()),
-          maxCurrent: logData[0][63][1].toString(),
-          minCurrent: logData[0][64][1].toString(),
-          meanCurrent: logData[0][65][1].toString(),
+          voltageHistory: Array.from({ length: 8 }, (_, i) =>
+            extractValue(`consumption_voltage_history_${i}`)
+          ),
+          maxVoltage: extractValue("consumption_voltage_max"),
+          minVoltage: extractValue("consumption_voltage_min"),
+          meanVoltage: extractValue("consumption_voltage_mean"),
+          currentHistory: Array.from({ length: 8 }, (_, i) =>
+            extractValue(`consumption_current_history_${i}`)
+          ),
+          maxCurrent: extractValue("consumption_current_max"),
+          minCurrent: extractValue("consumption_current_min"),
+          meanCurrent: extractValue("consumption_current_mean"),
         };
 
-        const chargingStatus = "NOT CHARGING"; // Example value, replace with actual parsing logic
-        const beaconStatus = "ACTIVE"; // Example value, replace with actual parsing logic
-        const voltageChargeOn = "12.5"; // Example value, replace with actual parsing logic
-        const tailCurrent = "5.0"; // Example value, replace with actual parsing logic
-
-        // Update state
         setPanelData(panel);
         setBatteryData(battery);
         setConsumptionData(consumption);
-        setChargingStatus(chargingStatus);
-        setBeaconStatus(beaconStatus);
-        setVoltageChargeOn(voltageChargeOn);
-        setTailCurrent(tailCurrent);
       }
     } catch (error) {
       console.error("Error running energy test:", error);

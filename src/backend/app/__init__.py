@@ -4,7 +4,8 @@ from flask_cors import CORS
 def create_app():
     """App factory for creating the Flask app instance."""
     app = Flask(__name__)
-    CORS(app)  # Enable CORS for all routes
+    #CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+    #CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
 
     # Register blueprints (modular routes)
     from .routes.folders import folders_bp
@@ -20,5 +21,7 @@ def create_app():
     app.register_blueprint(other_bp)
     app.register_blueprint(slaves_bp)
     app.register_blueprint(auto_test_bp)
+
+    CORS(app)  # Enable CORS for all routes
 
     return app
