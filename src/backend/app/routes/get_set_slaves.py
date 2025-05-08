@@ -25,15 +25,25 @@ class Slave:
 
 @slaves_bp.route("/list_sensors", methods=["POST"])
 async def list_sensors():
-    """
-    Detect sensors in a chain and return their IDs.
-    """
+    #"""
+    #Detect sensors in a chain and return their IDs.
+    #"""
+    """ print(f"Leegue al endpoint /list_sensors", flush=True)
+
+    responsive_slaves = []
+
+    responsive_slaves.append(Slave(1, 100, get_sensor_type(100)))
+
+    if responsive_slaves:
+        return jsonify({"responsive_slaves": [slave.to_dict() for slave in responsive_slaves]}), 200 """
+
     # Extract data from request JSON
     data = request.json
     first_slave = data.get("first_slave")
     last_slave = data.get("last_slave")
     chain_port = data.get("chain_port")
     chain_protocol = data.get("chain_protocol")
+    isPH = data.get("isPH", False)  # Default to False if not provided
     connection_success = False
 
     # Validate input
@@ -66,12 +76,16 @@ async def list_sensors():
 
     for slave_id in range(first_slave, last_slave + 1):
         if chain_protocol == "modbus" and connection_success:
-            read_value = await read_input_register(client, slave_id=slave_id, input_register_address=0)  
-            if read_value is not None: 
-                responsive_slaves.append(Slave(slave_id, read_value, get_sensor_type(read_value)))
-                print(f"Modbus Slave {slave_id}: Sensor Type: {get_sensor_type(read_value)} ({read_value})", flush=True)
+            if isPH:
+                print(f"Modbus Slave {slave_id}: PH mode.", flush=True)
+                pass
             else:
-                print(f"Modbus Slave {slave_id}: No se detectó ningún sensor.", flush=True)
+                read_value = await read_input_register(client, slave_id=slave_id, input_register_address=0)  
+                if read_value is not None: 
+                    responsive_slaves.append(Slave(slave_id, read_value, get_sensor_type(read_value)))
+                    print(f"Modbus Slave {slave_id}: Sensor Type: {get_sensor_type(read_value)} ({read_value})", flush=True)
+                else:
+                    print(f"Modbus Slave {slave_id}: No se detectó ningún sensor.", flush=True)
         elif chain_protocol == "legacy":
             read_value = legacy_get_sensor_id(chain_port, slave_id)
             if read_value is not None:
@@ -81,10 +95,20 @@ async def list_sensors():
             else:
                 print(f"Legacy Slave {slave_id}: No se detectó ningún sensor.", flush=True)
 
+    if responsive_slaves:
+        if len(responsive_slaves) >= 4 and \
+        responsive_slaves[0].sensor_id == 'TE' and \
+        responsive_slaves[1].sensor_id == 'HU' and \
+        responsive_slaves[2].sensor_id == 'PA' and \
+        responsive_slaves[3].sensor_id == 'TE':
+            responsive_slaves[3].sensor_id = 'COEF'
+            responsive_slaves[3].sensor_type = 'Calibration_Coefficients'
+            print("The specific slaves have the expected sensor_ids and sensor_types.", flush=True)
+    
     if chain_protocol == "modbus" and connection_success:
-        print("Terminé de detectar, me desconecto", flush=True)
+        print("Done detecting, attempting disconnection...", flush=True)
         try:
-            await client.close()
+            client.close()
         except Exception as e:
             print(f"Error al cerrar el cliente: {e}")
 

@@ -31,6 +31,7 @@ const SlaveDetectionModal: React.FC<SlaveDetectionModalProps> = ({
   const [consoleMessages, setConsoleMessages] = useState<string[]>([]);
   const [responsiveSlaves, setResponsiveSlaves] = useState<Slave[]>([]);
   const [isReadyEnabled, setIsReadyEnabled] = useState<boolean>(false);
+  const [isPhSensor, setIsPhSensor] = useState<boolean>(false); // New state for the checkbox
 
   const handleModeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDetectionMode(e.target.value);
@@ -62,6 +63,7 @@ const SlaveDetectionModal: React.FC<SlaveDetectionModalProps> = ({
         last_slave: last,
         chain_port: chain.chain_port,
         chain_protocol: chain.chain_protocol,
+        isPH: isPhSensor, // Include the isPH value based on the checkbox
       });
 
       if (response.data.responsive_slaves) {
@@ -190,6 +192,16 @@ const SlaveDetectionModal: React.FC<SlaveDetectionModalProps> = ({
               max={255}
             />
           </div>
+        </div>
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={isPhSensor}
+              onChange={(e) => setIsPhSensor(e.target.checked)}
+            />
+            isPh sensor?
+          </label>
         </div>
         <div className="slave-detection-modal-buttons">
           <button onClick={onClose}>Cancel</button>
