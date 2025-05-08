@@ -78,14 +78,24 @@ def add_sensor_chain(project_id):
     # Determine all types of sensors in the chain AKA chain_types
     # Determine all types of sensors in the chain AKA chain_types
     chain_types_set = set()
-    for slave in chain_data["chain_available_slaves"]:
-        sensor_id = slave.get("sensor_id")
-        sensor_type = slave.get("sensor_type")
-        general_type = resolve_general_type(sensor_id, sensor_type)
-
-        if general_type:
-            chain_types_set.add(general_type)
-
+    
+    print(f"Chain available slaves: {chain_data['chain_available_slaves']}",flush=True)
+    if (len(chain_data['chain_available_slaves']) >= 4 and
+    chain_data['chain_available_slaves'][0]['sensor_id'] == 'TE' and chain_data['chain_available_slaves'][0]['sensor_type'] == 'Temperature' and
+    chain_data['chain_available_slaves'][1]['sensor_id'] == 'HU' and chain_data['chain_available_slaves'][1]['sensor_type'] == 'Humidity' and
+    chain_data['chain_available_slaves'][2]['sensor_id'] == 'PA' and chain_data['chain_available_slaves'][2]['sensor_type'] == 'Pressure' and
+    chain_data['chain_available_slaves'][3]['sensor_id'] == 'COEF' and chain_data['chain_available_slaves'][3]['sensor_type'] == 'Calibration_Coefficients'):
+        chain_types_set.add("Air")
+        print("The specific slaves have the expected sensor_ids and sensor_types.", flush=True)
+    else:
+        for slave in chain_data["chain_available_slaves"]:
+            sensor_id = slave.get("sensor_id")
+            sensor_type = slave.get("sensor_type")
+            general_type = resolve_general_type(sensor_id, sensor_type)
+            print(f"Slave ID: {slave['slave_id']},  General Type: {general_type}",flush=True)
+            if general_type:
+                chain_types_set.add(general_type)
+    
     chain_data["chain_types"] = list(chain_types_set)
     
     # Save the updated config

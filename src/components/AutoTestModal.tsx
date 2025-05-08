@@ -8,7 +8,7 @@ import ProbeTest from "./ProbeTest";
 import RadiationTest from "./RadiationTest";
 import TemperatureTest from "./TemperatureTest";
 import WindTest from "./WindTest";
-import { getChainType, openModalByChainType } from "../utils/sensorUtils";
+import { openModalByChainType } from "../utils/sensorUtils";
 interface AutoTestModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -36,13 +36,14 @@ interface Slave {
 const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
   const { selectedProject } = useProjectContext();
   const project_folder = selectedProject?.folder + "/config.json";
+  //const project_folder = selectedProject?.folder;
   const { chains, numberOfChains } = useChainsContext();
   let [selectedChainId, setSelectedChainId] = useState("1"); // State for selected chain ID
 
   useEffect(() => {
     // Wait until chains[0] is defined and set the default chain type
     if (chains.length > 0 && chains[0].chain_types.length > 0) {
-      console.log("Default chain type set to:", chains[0].chain_types[0]);
+      //console.log("Default chain type set to:", chains[0].chain_types[0]);
       setSelectedChainType(chains[0].chain_types[0]);
     }
   }, [chains]);
@@ -395,10 +396,66 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
               <button onClick={handleRunTestByCycles}>Run Test</button>
             </div>
           )}
-
           {activeTab === "Slave Specific Test" && (
             <div className="tab-content">
-              {/* <TemperatureTest sensorSerial="ABC" /> */}
+              {chains.length === 0 ? (
+                <p>No available Chains</p>
+              ) : (
+                <>
+                  <label>
+                    Select Chain:
+                    <select
+                      value={selectedChainId || ""}
+                      onChange={(e) => {
+                        const newChainId = e.target.value;
+                        setSelectedChainId(newChainId);
+                        console.log("Selected chain ID:", selectedChainId);
+                        setSelectedChainType(
+                          chains[parseInt(newChainId) - 1].chain_types[0]
+                        );
+                      }}
+                    >
+                      {chains.map((chain) => (
+                        <option key={chain.id} value={chain.id}>
+                          {"Chain "}
+                          {chain.id} ({chain.chain_port})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {chains[getChainIndexbyId(selectedChainId)]?.chain_types
+                    .length === 0 ? (
+                    <p>No available Chain Types</p>
+                  ) : (
+                    <label>
+                      Select from available chain types:
+                      <select
+                        value={selectedChainType || ""}
+                        onChange={(e) => {
+                          const newChainType = e.target.value;
+                          setSelectedChainType(newChainType);
+                        }}
+                      >
+                        {chains[
+                          getChainIndexbyId(selectedChainId)
+                        ].chain_types.map((chainType, index) => (
+                          <option key={index} value={chainType}>
+                            {chainType}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  <button onClick={handleReadSensor}>
+                    Perform Sensor Specific Single Test
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+          {/* {activeTab === "Slave Specific Test" && (
+            <div className="tab-content">
+              {<TemperatureTest sensorSerial="ABC" /> }
               <label>
                 Select Chain:
                 <select
@@ -414,8 +471,8 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
                 >
                   {chains.map((chain) => (
                     <option key={chain.id} value={chain.id}>
-                      {chain.id} ({getChainType(chain.chain_available_slaves)})
-                      ({chain.chain_port})
+                      {"Chain "}
+                      {chain.id} ({chain.chain_port})
                     </option>
                   ))}
                 </select>
@@ -427,7 +484,7 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
                   onChange={(e) => {
                     const newChainType = e.target.value;
                     setSelectedChainType(newChainType);
-                    console.log("Selected chain type:", selectedChainType);
+                    //console.log("Selected chain type:", selectedChainType);
                   }}
                 >
                   {chains[getChainIndexbyId(selectedChainId)].chain_types.map(
@@ -443,15 +500,17 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
                 Perform Sensor Specific Single Test
               </button>
             </div>
-          )}
+          )} */}
         </div>
         <button className="auto-test-button" onClick={onClose}>
-          Cancel
+          Close
         </button>
       </div>
       <AirTest
         isOpen={isAirModalOpen}
         onClose={() => setIsAirModalOpen(false)}
+        projectFolder={project_folder} // Passing project folder
+        selectedChainId={selectedChainId} // Passing selected chain ID
       />
       <EnergyTest
         isOpen={isEnergyModalOpen}
@@ -466,6 +525,8 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
       <RadiationTest
         isOpen={isRadiationModalOpen}
         onClose={() => setIsRadiationModalOpen(false)}
+        projectFolder={project_folder} // Passing project folder
+        selectedChainId={selectedChainId} // Passing selected chain ID
       />
       <TemperatureTest
         isOpen={isTemperatureModalOpen}

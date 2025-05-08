@@ -18,7 +18,7 @@ class Slave:
             "sensor_type": self.sensor_type
         }
 class Chain:
-    def __init__(self, chain_port, baudrate, bytesize, parity, stopbits, timeout, chain_protocol, chain_available_slaves, chain_id, result_columns):
+    def __init__(self, chain_port, baudrate, bytesize, parity, stopbits, timeout, chain_protocol, chain_available_slaves, chain_id, result_columns, chain_types):
         self.chain_port = chain_port
         self.baudrate = baudrate
         self.bytesize = bytesize
@@ -30,6 +30,8 @@ class Chain:
         self.id = chain_id
         self.result_columns = result_columns
         self.chain_client = None  # Placeholder for the client object
+        self.chain_types = chain_types  # Added to store the
+
 
         # Convert dictionaries back into Slave objects
         self.chain_available_slaves = [
@@ -63,6 +65,7 @@ class Chain:
             "chain_available_slaves": self.chain_available_slaves,
             "id": self.id,
             "result_columns": self.result_columns,
+            "chain_types": self.chain_types,  # Added to store the chain types
         }
 
 
@@ -89,6 +92,7 @@ class Project:
             chain_available_slaves=chain_data["chain_available_slaves"],
             chain_id=chain_data["id"],
             result_columns=chain_data["result_columns"],
+            chain_types=chain_data["chain_types"],  # Added to store the chain types
         )
         self.chains.append(chain)
         #self.num_chains += 1
