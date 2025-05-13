@@ -13,6 +13,11 @@ interface SlaveDetectionModalProps {
   onSlavesDetected: (slaves: Slave[]) => void;
   chain: {
     chain_port: string;
+    baudrate: number;
+    bytesize: number;
+    parity: string;
+    stopbits: number;
+    timeout: number;
     chain_protocol: string;
   };
 }
@@ -28,6 +33,7 @@ const SlaveDetectionModal: React.FC<SlaveDetectionModalProps> = ({
   const [lastSlave, setLastSlave] = useState<number>(1);
   const [numberOfSlaves, setNumberOfSlaves] = useState<number>(1);
   const [specificSlave, setSpecificSlave] = useState<number>(1);
+  const [slaveListInput, setSlaveListInput] = useState<string>(""); // New state for list input
   const [consoleMessages, setConsoleMessages] = useState<string[]>([]);
   const [responsiveSlaves, setResponsiveSlaves] = useState<Slave[]>([]);
   const [isReadyEnabled, setIsReadyEnabled] = useState<boolean>(false);
@@ -43,28 +49,67 @@ const SlaveDetectionModal: React.FC<SlaveDetectionModalProps> = ({
     if (e.target.name === "lastSlave") setLastSlave(value);
     if (e.target.name === "numberOfSlaves") setNumberOfSlaves(value);
     if (e.target.name === "specificSlave") setSpecificSlave(value);
+    if (e.target.name === "slaveListInput") setSlaveListInput(e.target.value);
   };
 
   const handleGoClick = async () => {
-    let first = firstSlave;
-    let last = lastSlave;
+    let slaves: number[] = [];
 
-    if (detectionMode === "number") {
-      first = 1;
-      last = numberOfSlaves;
+    console.log("Intento detectar slaves con los siguientes parámetros:");
+    console.log("Detection Mode:", detectionMode);
+    console.log("First Slave ID:", firstSlave);
+    console.log("Last Slave ID:", lastSlave);
+    console.log("Number of Slaves:", numberOfSlaves);
+    console.log("Specific Slave ID:", specificSlave);
+    console.log("Slave List Input:", slaveListInput);
+    console.log("Is PH Sensor:", isPhSensor);
+    console.log("Chain Data:", chain);
+    console.log("Chain Port:", chain.chain_port);
+    console.log("Baudrate:", chain.baudrate);
+    console.log("Bytesize:", chain.bytesize);
+    console.log("Parity:", chain.parity);
+    console.log("Stopbits:", chain.stopbits);
+    console.log("Timeout:", chain.timeout);
+    console.log("Chain Protocol:", chain.chain_protocol);
+
+    if (detectionMode === "range") {
+      // Generate a list from firstSlave to lastSlave (inclusive)
+      slaves = Array.from(
+        { length: lastSlave - firstSlave + 1 },
+        (_, i) => firstSlave + i
+      );
+    } else if (detectionMode === "number") {
+      // Generate a list from 1 to numberOfSlaves (inclusive)
+      slaves = Array.from({ length: numberOfSlaves }, (_, i) => i + 1);
     } else if (detectionMode === "specific") {
-      first = last = specificSlave;
+      // List with only the specific slave
+      slaves = [specificSlave];
+    } else if (detectionMode === "list") {
+      // Parse the comma-separated list into an array of integers
+      slaves = slaveListInput
+        .split(",")
+        .map((s) => parseInt(s.trim(), 10))
+        .filter((n) => !isNaN(n) && n >= 1 && n <= 255);
     }
+
+    const payload: any = {
+      chain_port: chain.chain_port,
+      baudrate: chain.baudrate,
+      bytesize: chain.bytesize,
+      parity: chain.parity,
+      stopbits: chain.stopbits,
+      timeout: chain.timeout,
+      chain_protocol: chain.chain_protocol,
+      isPH: isPhSensor,
+      slaves,
+    };
 
     try {
       setConsoleMessages((prev) => [...prev, "Starting slave detection..."]);
-      const response = await axios.post("http://localhost:5000/list_sensors", {
-        first_slave: first,
-        last_slave: last,
-        chain_port: chain.chain_port,
-        chain_protocol: chain.chain_protocol,
-        isPH: isPhSensor, // Include the isPH value based on the checkbox
-      });
+      const response = await axios.post(
+        "http://localhost:5000/list_sensors",
+        payload
+      );
 
       if (response.data.responsive_slaves) {
         setResponsiveSlaves(response.data.responsive_slaves);
@@ -190,6 +235,31 @@ const SlaveDetectionModal: React.FC<SlaveDetectionModalProps> = ({
               onChange={handleInputChange}
               min={1}
               max={255}
+            />
+          </div>
+          <div
+            className={`slave-detection-mode ${
+              detectionMode === "list" ? "selected-mode" : ""
+            }`}
+          >
+            <label>
+              <input
+                type="radio"
+                name="detectionMode"
+                value="list"
+                checked={detectionMode === "list"}
+                onChange={handleModeChange}
+              />
+              Detect from list
+            </label>
+            <label>Slave IDs (comma separated):</label>
+            <input
+              type="text"
+              name="slaveListInput"
+              disabled={detectionMode !== "list"}
+              value={slaveListInput}
+              onChange={handleInputChange}
+              placeholder="e.g. 1,3,5,7"
             />
           </div>
         </div>

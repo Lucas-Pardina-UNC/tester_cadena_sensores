@@ -24,31 +24,25 @@ class Slave:
         }
 
 @slaves_bp.route("/list_sensors", methods=["POST"])
-async def list_sensors():
-    #"""
-    #Detect sensors in a chain and return their IDs.
-    #"""
-    """ print(f"Leegue al endpoint /list_sensors", flush=True)
-
-    responsive_slaves = []
-
-    responsive_slaves.append(Slave(1, 100, get_sensor_type(100)))
-
-    if responsive_slaves:
-        return jsonify({"responsive_slaves": [slave.to_dict() for slave in responsive_slaves]}), 200 """
-
-    # Extract data from request JSON
+async def list_specific_sensors():
+    """
+    Detect sensors for a specific list of slave IDs and return their IDs.
+    """
     data = request.json
-    first_slave = data.get("first_slave")
-    last_slave = data.get("last_slave")
+    slaves = data.get("slaves")
     chain_port = data.get("chain_port")
+    chain_baudrate = data.get("baudrate")
+    chain_bytesize = data.get("bytesize")
+    chain_parity = data.get("parity")
+    chain_stopbits = data.get("stopbits")
+    chain_timeout = data.get("timeout")
     chain_protocol = data.get("chain_protocol")
-    isPH = data.get("isPH", False)  # Default to False if not provided
+    isPH = data.get("isPH", False)
     connection_success = False
 
     # Validate input
-    if not (isinstance(first_slave, int) and isinstance(last_slave, int)) or not (1 <= first_slave <= last_slave <= 255):
-        return jsonify({"error": "Invalid slave range. 'first_slave' and 'last_slave' must be integers between 1 and 255, with first_slave <= last_slave."}), 400
+    if not isinstance(slaves, list) or not all(isinstance(s, int) and 1 <= s <= 255 for s in slaves):
+        return jsonify({"error": "'slaves' must be a list of integers between 1 and 255."}), 400
 
     if chain_protocol not in ["modbus", "legacy"]:
         return jsonify({"error": "Invalid 'chain_protocol'. Must be 'modbus' or 'legacy'."}), 400
@@ -58,14 +52,14 @@ async def list_sensors():
     if chain_protocol == "modbus":
         client = AsyncModbusSerialClient(
             port=chain_port,
-            framer=Framer,  # Use Framer (framer_selector.py) instead of FramerType.RTU for retrocompatiiility
-            baudrate=9600,
-            bytesize=8,
-            parity="N",
-            stopbits=1,
-            timeout=1
+            framer=Framer,
+            baudrate=chain_baudrate,
+            bytesize=chain_bytesize,
+            parity=chain_parity,
+            stopbits=chain_stopbits,
+            timeout=chain_timeout
         )
-        print("", flush=True)  # Línea vacía
+        print("", flush=True)
         print("Conectando al servidor...", flush=True)
         await client.connect()
         if client.connected:
@@ -74,14 +68,14 @@ async def list_sensors():
         else:
             print(f"Error de conexión para la cadena de sensores, puerto {chain_port}.", flush=True)
 
-    for slave_id in range(first_slave, last_slave + 1):
+    for slave_id in slaves:
         if chain_protocol == "modbus" and connection_success:
             if isPH:
                 print(f"Modbus Slave {slave_id}: PH mode.", flush=True)
                 pass
             else:
-                read_value = await read_input_register(client, slave_id=slave_id, input_register_address=0)  
-                if read_value is not None: 
+                read_value = await read_input_register(client, slave_id=slave_id, input_register_address=0)
+                if read_value is not None:
                     responsive_slaves.append(Slave(slave_id, read_value, get_sensor_type(read_value)))
                     print(f"Modbus Slave {slave_id}: Sensor Type: {get_sensor_type(read_value)} ({read_value})", flush=True)
                 else:
@@ -104,7 +98,7 @@ async def list_sensors():
             responsive_slaves[3].sensor_id = 'COEF'
             responsive_slaves[3].sensor_type = 'Calibration_Coefficients'
             print("The specific slaves have the expected sensor_ids and sensor_types.", flush=True)
-    
+
     if chain_protocol == "modbus" and connection_success:
         print("Done detecting, attempting disconnection...", flush=True)
         try:
