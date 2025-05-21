@@ -255,7 +255,16 @@ def delete_project(project_id):
     # Delete the project folder if requested
     if delete_folder and os.path.exists(project_folder):
         try:
-            os.rmdir(project_folder)  # Removes empty folder
+            # Remove all files in the folder
+            for filename in os.listdir(project_folder):
+                file_path = os.path.join(project_folder, filename)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                elif os.path.isdir(file_path):
+                    # Recursively remove subdirectories if needed
+                    import shutil
+                    shutil.rmtree(file_path)
+            os.rmdir(project_folder)  # Removes now-empty folder
         except OSError as e:
             return jsonify({"status": "error", "message": f"Failed to delete folder: {str(e)}"}), 500
 

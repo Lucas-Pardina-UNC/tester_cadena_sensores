@@ -1,0 +1,39 @@
+{
+    "appId": "com.lh_software_dev_lp.sensor_chain_tester",
+    "files": [
+        "dist-electron",
+        "dist-react"
+    ],
+    "extraResources": [
+        {
+            "from": "src/electron/backend",
+            "to": "backend",
+            "filter": ["**/*"]
+        }
+    ],
+    "icon": "./desktopIcon.png",
+    "mac": {
+        "target": "dmg"
+    },
+    "linux": {
+        "target": [
+            "AppImage",
+            "deb"
+        ],
+        "category": "Utility"
+    },
+    "win": {
+        "target": [
+            "portable",
+            "nsis"
+        ]
+    },
+    "nsis": {
+        "oneClick": false,
+        "allowToChangeInstallationDirectory": true,
+        "createDesktopShortcut": true,
+        "shortcutName": "SensorChainTester",
+        "allowElevation": true,
+        "runAfterFinish": true
+    }
+}

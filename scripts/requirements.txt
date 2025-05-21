@@ -1,0 +1,10 @@
+waitress
+Flask
+flask-cors
+asyncio
+pymodbus>=3.2.0
+openpyxl
+pyserial
+tkinter
+multiprocessing
+platform

@@ -9,14 +9,23 @@ const ProbeTest: React.FC<ProbeTestProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null; // Don't render the modal if it's not open
 
   // State variables for Probe Test data
+  // @ts-ignore
   const [phycocyaninLevel, setPhycocyaninLevel] = useState(" - ");
+  // @ts-ignore
   const [chlorophyllLevel, setChlorophyllLevel] = useState(" - ");
+  // @ts-ignore
   const [turbidityLevel, setTurbidityLevel] = useState(" - ");
+  // @ts-ignore
   const [ph, setPH] = useState(" - ");
+  // @ts-ignore
   const [phORP, setPHORP] = useState(" - ");
+  // @ts-ignore
   const [odTemp, setODTemp] = useState(" - ");
+  // @ts-ignore
   const [od, setOD] = useState(" - ");
+  // @ts-ignore
   const [odMgl, setODMgl] = useState(" - ");
+  // @ts-ignore
   const [odPPM, setODPPM] = useState(" - ");
 
   // Placeholder function for "Run Test" button

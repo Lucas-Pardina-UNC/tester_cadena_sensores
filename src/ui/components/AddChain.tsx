@@ -63,6 +63,7 @@ const AddChain: React.FC = () => {
     }
   };
 
+  // @ts-ignore
   const fetchChainsData = async (projectFolder: string) => {
     try {
       const response = await axios.get("http://localhost:5000/get-chains");

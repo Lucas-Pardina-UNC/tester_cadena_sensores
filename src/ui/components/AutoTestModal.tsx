@@ -13,6 +13,7 @@ interface AutoTestModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
+// @ts-ignore
 interface Chain {
   id: string;
   chain_port: string;

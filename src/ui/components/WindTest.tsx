@@ -9,7 +9,9 @@ const WindTest: React.FC<WindTestProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null; // Don't render the modal if it's not open
 
   // State variables for Wind Speed and Wind Direction
+  // @ts-ignore
   const [windSpeed, setWindSpeed] = useState(" - ");
+  // @ts-ignore
   const [windDirection, setWindDirection] = useState(" - ");
 
   // Placeholder function for "Run Test" button
