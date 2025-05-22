@@ -42,3 +42,5 @@ dist-electron
 *.sln
 *.sw?
 
+# Auto-generated scripts
+scripts/script.generated.js

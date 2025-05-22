@@ -10,6 +10,7 @@
     "dev:react": "vite",
     "dev:electron": "npm run transpile:electron && cross-env NODE_ENV=development electronmon .",
     "build": "tsc -b && vite build && electron-builder",
+    "postbuild": "node scripts/build-python-installer.js",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "transpile:electron": "tsc --project src/electron/tsconfig.json",
