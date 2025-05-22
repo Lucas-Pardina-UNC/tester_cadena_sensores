@@ -1,4 +1,4 @@
-.modal-overlay {
+.new-project-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -11,23 +11,69 @@
     z-index: 1000;
   }
   
-  .modal {
+  .new-project-modal {
     background: white;
     padding: 20px;
     border-radius: 8px;
     max-width: 500px;
     width: 100%;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
   
-  .modal h2 {
+  .new-project-modal h2 {
     margin-top: 0;
   }
   
-  .modal-buttons {
+  .new-project-data {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: center;
+
+    .project-name-input {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      column-gap: 0.5rem;
+      margin-bottom: 1rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .project-folder-input {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr 1fr;
+      column-gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .project-data-label {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 10px; // Add some padding
+      }
+
+    button {
+        padding: 10px 20px; // Add some padding
+        border-radius: 4px; // Rounded corners
+    }
+    input {
+        padding: 10px; // Add some padding
+    }
+  }
+
+  .new-project-modal-buttons {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+    button {
+        padding: 10px 20px; // Add some padding
+        border-radius: 4px; // Rounded corners
+    }
   }
   
   .validation-message {

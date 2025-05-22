@@ -85,32 +85,38 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
   if (!isOpen) return null; // If close then don't render anything
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
+    <div className="new-project-modal-overlay">
+      <div className="new-project-modal">
         <h2>Create New Project</h2>
-        <div>
-          <label>Project Name</label>
-          <input
-            type="text"
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-            placeholder="Enter project name"
-          />
-        </div>
-        <div>
-          <label>Project Folder</label>
-          <input
-            type="text"
-            value={folderPath}
-            readOnly
-            placeholder="Select a folder"
-          />
-          <button onClick={selectFolder}>Select Folder</button>
+        <div className="new-project-data">
+          <div className="project-name-input">
+            <div className="project-data-label">
+              <label>Project Name</label>
+            </div>
+            <input
+              type="text"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              placeholder="Enter project name"
+            />
+          </div>
+          <div className="project-folder-input">
+            <div className="project-data-label">
+              <label>Project Folder</label>
+            </div>
+            <input
+              type="text"
+              value={folderPath}
+              readOnly
+              placeholder="Select a folder"
+            />
+            <button onClick={selectFolder}>Select Folder</button>
+          </div>
         </div>
         {validationMessage && (
           <p className="validation-message">{validationMessage}</p>
         )}
-        <div className="modal-buttons">
+        <div className="new-project-modal-buttons">
           <button
             onClick={() => {
               onClose();
