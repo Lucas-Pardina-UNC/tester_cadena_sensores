@@ -28,6 +28,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-react
 dist-electron
 *.local
 
