@@ -5,19 +5,41 @@ import path from 'path';
 import { isDev } from './util.js';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
+import net from 'net';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let mainWindow: BrowserWindow | null = null;
 let backendProcess: any = null;
 
+function getAvailablePort(startingPort: number): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.unref();
+    server.on('error', reject);
+    server.listen(startingPort, () => {
+      const port = (server.address() as net.AddressInfo).port;
+      server.close(() => resolve(port));
+    });
+  });
+}
+
 function createWindow() {
+  const preloadPath = path.resolve(__dirname, 'preload.js');
+
+  console.log('Using preload script at:', preloadPath);
+  
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'), // Adjust if needed
+      preload: preloadPath, // Use the correct path to preload.js
+      //preload: path.join('preload.js'), // Adjust if needed
+      //preload: path.join(__dirname, '..', 'dist-electron', 'preload.js')
+      //preload: path.join(__dirname, 'preload.js'), // Adjust if needed
+      // Use the built preload.js from dist-electron
+      //preload: path.join(__dirname, '..', '..', 'dist-electron', 'preload.js'),
     },
   });
 
@@ -28,16 +50,15 @@ function createWindow() {
   }
 }
 
-function startBackend() {
-  // Adjust path based on environment
+function startBackend(port: number) {
   const scriptPath = isDev()
     ? path.join(__dirname, '..', 'src', 'electron', 'backend', 'app.py')
-    : path.join(process.resourcesPath, 'backend', 'app.py'); // You'll need to copy backend to `resources` in build
+    : path.join(process.resourcesPath, 'backend', 'app.py');
 
   const pythonExecutable = process.platform === 'win32' ? 'python' : 'python3';
 
-  console.log(`Starting backend from: ${scriptPath}`);
-  backendProcess = spawn(pythonExecutable, [scriptPath]);
+  console.log(`Starting backend from: ${scriptPath} on port ${port}`);
+  backendProcess = spawn(pythonExecutable, [scriptPath, port.toString()]);
 
   backendProcess.stdout.on('data', (data: Buffer) => {
     console.log(`[Backend]: ${data}`);
@@ -52,6 +73,7 @@ function startBackend() {
   });
 }
 
+
 function stopBackend() {
   if (backendProcess) {
     backendProcess.kill();
@@ -59,10 +81,20 @@ function stopBackend() {
   }
 }
 
+let backendPort: number;
+
 // App lifecycle
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   console.log('App is ready');
-  startBackend();
+  backendPort = await getAvailablePort(5000);
+  console.log(`Using backend port: ${backendPort}`);
+  
+  // Register IPC handler
+  ipcMain.handle('get-backend-port', async () => {
+    return backendPort;
+  });
+  
+  startBackend(backendPort);
   createWindow();
 
   app.on('activate', () => {

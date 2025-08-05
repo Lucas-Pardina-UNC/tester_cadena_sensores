@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useChainsContext } from "./ChainsContext";
 import { useAlert } from "./CustomAlertContext";
+import { useBackendRequest } from "../utils/backendRequest";
 
 interface Slave {
   slave_id: number;
@@ -35,6 +35,8 @@ const Chain: React.FC<ChainProps> = ({ chain }) => {
     { device: string; description: string }[]
   >([]);
 
+  const { makeRequest } = useBackendRequest();
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -50,10 +52,14 @@ const Chain: React.FC<ChainProps> = ({ chain }) => {
 
   const handleSave = async () => {
     try {
-      const response = await axios.put(
+      const response = await makeRequest(`/update-chain/${chain.id}`, {
+        method: "PUT",
+        data: editableChain,
+      });
+      /*const response = await axios.put(
         `http://localhost:5000/update-chain/${chain.id}`,
         editableChain
-      );
+      );*/
       if (response.data.status === "success") {
         await showAlert("Chain changes saved successfully!");
         fetchChainsData();
@@ -68,33 +74,31 @@ const Chain: React.FC<ChainProps> = ({ chain }) => {
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/delete-chain/${chain.id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await makeRequest(`/delete-chain/${chain.id}`, {
+        method: "DELETE",
+      });
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log(result);
-        fetchChainsData();
-        const message = `Chain with ID ${chain.id} deleted successfully.`;
-        await showAlert(message);
-        //alert(`Chain with ID ${chain.id} deleted successfully.`);
+      // Axios puts parsed JSON in response.data
+      console.log(response.data);
+      fetchChainsData();
+      const message = `Chain with ID ${chain.id} deleted successfully.`;
+      await showAlert(message);
+    } catch (error: any) {
+      // Axios includes error response in error.response
+      if (error.response && error.response.data?.message) {
+        alert(`Error deleting chain: ${error.response.data.message}`);
       } else {
-        const error = await response.json();
-        alert(`Error deleting chain: ${error.message}`);
+        alert("An error occurred while trying to delete the chain.");
       }
-    } catch (error) {
       console.error("Error deleting chain:", error);
-      alert("An error occurred while trying to delete the chain.");
     }
   };
 
   const fetchComPorts = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/list-com-ports");
+      const response = await makeRequest("/list-com-ports", {
+        method: "GET",
+      });
       if (response.data.status === "success") {
         setComPorts(response.data.ports);
       } else {

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { useBackendRequest } from "../utils/backendRequest";
 
 interface EnergyTestProps {
   isOpen: boolean;
@@ -56,6 +56,8 @@ const EnergyTest: React.FC<EnergyTestProps> = ({
   const [voltageChargeOn, setVoltageChargeOn] = useState(" - ");
   const [tailCurrent, setTailCurrent] = useState(" - ");
 
+  const { makeRequest } = useBackendRequest();
+
   // Fetch data from the endpoint
   const runEnergyTest = async () => {
     setPanelData({
@@ -97,9 +99,12 @@ const EnergyTest: React.FC<EnergyTestProps> = ({
     setTailCurrent(" ");
 
     try {
-      const response = await axios.post("http://localhost:5000/single_test", {
-        file_path: projectFolder,
-        chain_id: selectedChainId,
+      const response = await makeRequest("/single_test", {
+        method: "POST",
+        data: {
+          file_path: projectFolder,
+          chain_id: selectedChainId,
+        },
       });
 
       if (response.data.status === "success") {

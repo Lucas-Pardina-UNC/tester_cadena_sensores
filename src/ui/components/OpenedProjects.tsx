@@ -1,16 +1,19 @@
-import axios from "axios";
 import { useProjectContext } from "./ProjectContext";
 import { useChainsContext } from "./ChainsContext";
+import { useBackendRequest } from "../utils/backendRequest";
 
 const OpenedProjects: React.FC = () => {
   const { openedProjects, selectedProject, setSelectedProject } =
     useProjectContext();
   const { fetchChainsData } = useChainsContext();
+  const { makeRequest } = useBackendRequest();
 
   const handleSelectProject = async (id: string) => {
     try {
       // Update the selected project in the backend
-      await axios.patch(`http://localhost:5000/select-project/${id}`);
+      await makeRequest(`/select-project/${id}`, {
+        method: "PATCH",
+      });
 
       // Update the selected project in the context
       const updatedProjects = openedProjects.map((project) =>

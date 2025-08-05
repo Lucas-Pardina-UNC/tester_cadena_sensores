@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { useBackendRequest } from "../utils/backendRequest";
 
 interface DeleteProjectModalProps {
   isOpen: boolean;
@@ -16,12 +16,14 @@ const DeleteProjectModal: React.FC<DeleteProjectModalProps> = ({
 }) => {
   const [deleteFolder, setDeleteFolder] = useState(false);
   const [deleteConfigFile, setDeleteConfigFile] = useState(false);
+  const { makeRequest } = useBackendRequest();
 
   const handleAccept = async () => {
     if (!projectId) return;
 
     try {
-      await axios.delete(`http://localhost:5000/delete-project/${projectId}`, {
+      await makeRequest(`/delete-project/${projectId}`, {
+        method: "DELETE",
         data: { deleteFolder, deleteConfigFile },
       });
       onSuccess();

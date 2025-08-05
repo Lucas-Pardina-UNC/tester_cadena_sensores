@@ -1,10 +1,8 @@
 import React, { useState } from "react";
-// import React, { useState, useRef, useEffect } from "react";
-import axios from "axios";
 import { useProjectContext } from "./ProjectContext";
 import { useChainsContext } from "./ChainsContext";
 import { useAlert } from "./CustomAlertContext";
-
+import { useBackendRequest } from "../utils/backendRequest";
 interface NewProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -28,9 +26,14 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
     setFolderPath("");
   };
 
+  const { makeRequest } = useBackendRequest();
+
   const selectFolder = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/select-folder");
+      const response = await makeRequest("/select-folder", {
+        method: "GET",
+      });
+      console.log("Select folder response:", response.data);
       if (response.data.status === "success") {
         setFolderPath(response.data.folder);
         setValidationMessage("");
@@ -52,12 +55,18 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
       setValidationMessage("Please select a project folder.");
       return;
     }
-
     try {
-      const response = await axios.post(
-        "http://localhost:5000/create-project",
-        { name: projectName, folder: folderPath }
-      );
+      const response = await makeRequest("/create-project", {
+        method: "POST",
+        data: {
+          name: projectName,
+          folder: folderPath,
+        },
+      });
+      /*const response = await axios.post(`${backendUrl}/create-project`, {
+        name: projectName,
+        folder: folderPath,
+      });*/
 
       if (response.data.status === "success") {
         const message = `Project "${projectName}" created successfully in "${folderPath}`;

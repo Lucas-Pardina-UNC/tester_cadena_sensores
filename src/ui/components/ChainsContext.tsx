@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
-import axios from "axios";
 import { useProjectContext } from "./ProjectContext";
+import { useBackendRequest } from "../utils/backendRequest";
 
 interface Slave {
   slave_id: number;
@@ -30,6 +30,7 @@ interface ChainsContextType {
   fetchChainsData: () => Promise<void>; // Add fetchChainsData here
 }
 
+//const { makeRequest } = useBackendRequest();
 const ChainsContext = createContext<ChainsContextType | undefined>(undefined);
 
 export const ChainsProvider: React.FC<{ children: ReactNode }> = ({
@@ -43,9 +44,13 @@ export const ChainsProvider: React.FC<{ children: ReactNode }> = ({
     setChains(newChains);
   };
 
+  const { makeRequest } = useBackendRequest();
+
   const fetchChainsData = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/get-chains");
+      const response = await makeRequest("/get-chains", {
+        method: "GET",
+      });
 
       if (response.data.status === "success") {
         const chains = response.data.chains;

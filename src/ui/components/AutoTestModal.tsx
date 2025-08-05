@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useChainsContext } from "./ChainsContext";
 import { useProjectContext } from "./ProjectContext";
 import AirTest from "./AirTest";
@@ -9,6 +8,7 @@ import RadiationTest from "./RadiationTest";
 import TemperatureTest from "./TemperatureTest";
 import WindTest from "./WindTest";
 import { openModalByChainType } from "../utils/sensorUtils";
+import { useBackendRequest } from "../utils/backendRequest";
 interface AutoTestModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -74,6 +74,8 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
   const [isRadiationModalOpen, setIsRadiationModalOpen] = useState(false);
   const [isTemperatureModalOpen, setIsTemperatureModalOpen] = useState(false);
   const [isWindModalOpen, setIsWindModalOpen] = useState(false);
+
+  const { makeRequest } = useBackendRequest();
 
   let getChainIndexbyId = (myId: string): number => {
     for (let i = 0; i < numberOfChains; i++) {
@@ -153,14 +155,13 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
 
   const handleRunTestByCycles = async () => {
     try {
-      const response = await axios.post(
-        "http://localhost:5000/auto_test_by_cycles",
-        {
+      const response = await makeRequest("/auto_test_by_cycles", {
+        method: "POST",
+        data: {
           file_path: project_folder,
           num_cycles: parseInt(cycles),
-        }
-      );
-
+        },
+      });
       if (response.data.status === "success") {
         console.log("Test completed successfully");
       } else {
@@ -183,15 +184,14 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
       intervalSeconds;
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/auto_test_with_interval",
-        {
+      const response = await makeRequest("/auto_test_with_interval", {
+        method: "POST",
+        data: {
           file_path: project_folder,
           total_duration: totalDuration,
           interval: interval,
-        }
-      );
-
+        },
+      });
       if (response.data.status === "success") {
         setRemainingTime("Test completed successfully");
       } else {
@@ -538,6 +538,8 @@ const AutoTestModal: React.FC<AutoTestModalProps> = ({ isOpen, onClose }) => {
       <WindTest
         isOpen={isWindModalOpen}
         onClose={() => setIsWindModalOpen(false)}
+        projectFolder={project_folder} // Passing project folder
+        selectedChainId={selectedChainId} // Passing selected chain ID
       />
     </div>
   );

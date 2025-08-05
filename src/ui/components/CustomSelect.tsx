@@ -9,6 +9,7 @@ interface CustomSelectProps {
   selected?: string;
   onSelect?: (value: string) => void;
   closeAllDropdowns?: () => void; // Callback to close parent dropdowns
+  onClick?: (event: React.MouseEvent<HTMLDivElement>) => void; // Optional click handler
   className?: string; // Add className prop
 }
 
@@ -19,6 +20,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   selected: initialSelected = "",
   onSelect,
   closeAllDropdowns,
+  onClick,
   className, // Destructure className prop
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -90,6 +92,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
               top: dropdownPosition.top,
               left: dropdownPosition.left,
             }}
+            onClick={onClick}
           >
             {options.map((option, index) => {
               const isCustomSelect =

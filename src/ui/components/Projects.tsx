@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import CustomSelect from "./CustomSelect";
 import NewProjectModal from "./NewProjectModal";
 import OpenedProjects from "./OpenedProjects";
@@ -7,6 +6,7 @@ import DeleteProjectModal from "./DeleteProjectModal";
 import { useProjectContext } from "./ProjectContext"; // Import context
 import { useChainsContext } from "./ChainsContext";
 import { useAlert } from "./CustomAlertContext";
+import { useBackendRequest } from "../utils/backendRequest";
 
 function Projects() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,10 +33,14 @@ function Projects() {
     await showAlert("Project deleted successfully!");
   };
 
+  const { makeRequest } = useBackendRequest();
+
   const handleOpenProjectDialog = async () => {
     try {
       // Call the open-project API endpoint to trigger the file dialog
-      const response = await axios.post("http://localhost:5000/open-project");
+      const response = await makeRequest("/open-project", {
+        method: "POST",
+      });
 
       if (response.data.status === "success") {
         await showAlert("Project opened successfully!");
@@ -54,9 +58,12 @@ function Projects() {
 
   const handleOpenProject = async (projectId: string) => {
     try {
-      await axios.patch(
+      await makeRequest(`/open-recent-project/${projectId}`, {
+        method: "PATCH",
+      });
+      /*await axios.patch(
         `http://localhost:5000/open-recent-project/${projectId}`
-      );
+      );*/
       await showAlert("Project opened successfully!");
       fetchNonOpenedProjects(); // Refresh non-opened projects
       fetchOpenedProjects();
@@ -70,7 +77,10 @@ function Projects() {
   const handleCloseSelectedProject = async () => {
     try {
       // Make API call to close the selected project
-      await axios.patch(`http://localhost:5000/close-selected-project`);
+      await makeRequest("/close-selected-project", {
+        method: "PATCH",
+      });
+      //await axios.patch(`http://localhost:5000/close-selected-project`);
       // Refresh projects list after closing
       fetchOpenedProjects();
       fetchNonOpenedProjects();
@@ -123,6 +133,7 @@ function Projects() {
                   ))
                 : [<div key="no-projects">No Recent Projects Available</div>]
             }
+            onClick={() => fetchNonOpenedProjects()}
           />,
         ]}
       />

@@ -9,6 +9,9 @@
         // define where to put generated JS
         "outDir": "../../dist-electron",
         // igneore errors from dependencies
-        "skipLibCheck": true,
-    }
+        "skipLibCheck": true
+    },
+    "include": [
+            "main.ts"
+    ]
 }

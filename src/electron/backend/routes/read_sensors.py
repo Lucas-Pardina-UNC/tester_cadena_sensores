@@ -26,7 +26,7 @@ async def read_modbus_energy_sensor(chain_id : int, slave_id, client):
                     charge = "CHARGING"
                 else:
                     charge = "NOT CHARGING"
-                print(f"Charge Last: {charge}", flush=True)
+                #print(f"Charge Last: {charge}", flush=True)
             current_timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
             log_data.append((current_timestamp, chain_id, slave_id, "Status_Charging", charge_ADC, charge))
             log_data.append((current_timestamp, chain_id, slave_id, "Status_Beacon", 1, "BEACONS ON"))
@@ -570,10 +570,10 @@ async def read_modbus_air_sensors(chain_id : int, slave_id, client):
             else:
                 print(f"Error al escribir en la bobina 0 para el esclavo {slave_id}")    
     except ModbusException:
-        print(f"Error de Modbus para el esclavo {slave_id}", flush=True)
+        #print(f"Error de Modbus para el esclavo {slave_id}", flush=True)
         log_data.append((current_timestamp, chain_id, slave_id,"Error", "Error"))
 
-    print(f"Legacy Air Log Data: {log_data}", flush=True)
+    #print(f"Legacy Air Log Data: {log_data}", flush=True)
     return log_data
 
 async def read_legacy_humidity_sensor(chain_id : int, chain_port, slave_id):
@@ -644,7 +644,7 @@ async def read_legacy_pressure_sensor(chain_id : int, chain_port, slave_id):
     log_data.append((current_timestamp, chain_id, slave_id, "pressure", ADC_value_press, pressure))
     #log_data.append(coefficients)
 
-    print(f"Legacy Pressure Log Data: {log_data}", flush=True)
+    #print(f"Legacy Pressure Log Data: {log_data}", flush=True)
     return log_data
 
 async def read_legacy_temperature_sensor(chain_id : int, chain_port, slave_id):

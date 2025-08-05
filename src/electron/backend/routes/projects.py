@@ -1,27 +1,48 @@
 from flask import Blueprint, jsonify, request
 from multiprocessing import Process, Queue
 from tkinter import Tk, filedialog
+from platformdirs import user_data_dir
 import os
 import json
 import uuid
 
-PROJECTS_FILE = os.path.join(os.path.dirname(__file__), "..", "myProjects.json")
+APP_NAME = "sensor_chain_tester"
+
+# Fix nested folder issue by disabling appauthor
+config_dir = user_data_dir(appname=APP_NAME, appauthor=False)
+os.makedirs(config_dir, exist_ok=True)
+
+PROJECTS_FILE = os.path.join(config_dir, "myProjects.json")
+
+# Debug print
+print(f"[INFO] Using projects config file at: {PROJECTS_FILE}", flush=True)
 
 projects_bp = Blueprint("projects", __name__)
 
 def load_projects():
-    """Load existing projects from the JSON file, or return an empty list if file doesn't exist"""
-    if os.path.exists(PROJECTS_FILE):
-        with open(PROJECTS_FILE, "r") as file:
-            return json.load(file)
-    else:
+    if not os.path.exists(PROJECTS_FILE):
+        print("myProjects.json does not exist, returning empty list.")
         return []
+
+    with open(PROJECTS_FILE, "r") as file:
+        try:
+            data = json.load(file)
+            if not isinstance(data, list):
+                print("Invalid data in myProjects.json (not a list), resetting to empty list.")
+                return []
+            return data
+        except json.JSONDecodeError:
+            print("Failed to decode myProjects.json, file is probably empty or corrupt. Resetting to empty list.")
+            return []
 
 
 def save_projects(projects):
     """Save the list of projects to the JSON file"""
     with open(PROJECTS_FILE, "w") as file:
         json.dump(projects, file, indent=4)
+
+def projects_are_equal(a, b):
+    return json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
 
 @projects_bp.route('/create-project', methods=['POST'])
 def create_project():
@@ -102,14 +123,42 @@ def get_projects():
 def get_opened_projects():
     #Returns a list of all opened projects
     projects = load_projects()
-    opened_projects = [project for project in projects if project["open"]]
+    cleaned_projects = []
+
+    for project in projects:
+        config_file_path = os.path.join(project["folder"], "config.json")
+        if os.path.exists(config_file_path):
+            cleaned_projects.append(project)
+        else:
+            print(f"Warning: Missing config.json for project {project['name']} — removing from project list.")
+
+    # Only save if something was cleaned
+    if not projects_are_equal(projects, cleaned_projects):
+        save_projects(cleaned_projects)
+
+    # Only return opened projects
+    opened_projects = [project for project in cleaned_projects if project["open"]]
     return jsonify({"status": "success", "opened_projects": opened_projects})
 
 @projects_bp.route('/api/projects/non-opened', methods=['GET'])
 def get_non_opened_projects():
     """Returns a list of all non-opened projects."""
     projects = load_projects()
-    non_opened_projects = [project for project in projects if not project["open"]]
+    cleaned_projects = []
+
+    for project in projects:
+        config_file_path = os.path.join(project["folder"], "config.json")
+        if os.path.exists(config_file_path):
+            cleaned_projects.append(project)
+        else:
+            print(f"Warning: Missing config.json for project {project['name']} — removing from project list.")
+
+    # Only save if something was cleaned
+    if not projects_are_equal(projects, cleaned_projects):
+        save_projects(cleaned_projects)
+
+    # Only return non-opened projects
+    non_opened_projects = [project for project in cleaned_projects if not project["open"]]
     return jsonify({"status": "success", "non_opened_projects": non_opened_projects})
 
 def open_file_dialog(queue):
@@ -168,6 +217,9 @@ def open_project():
         save_projects(projects) 
         return jsonify({"status": "success", "message": "Project opened successfully."}), 200
 
+    if not os.path.isdir(os.path.dirname(file_path)):
+        return jsonify({"status": "error", "message": "The selected project's folder does not exist."}), 400
+ 
     # Add the project to the projects list
     new_project = {
         "id": project_id,

@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useProjectContext } from "./ProjectContext";
 import { useChainsContext } from "./ChainsContext";
-
+import { useBackendRequest } from "../utils/backendRequest";
 interface Chain {
   chain_port: string;
   baudrate: number;
@@ -30,6 +29,8 @@ const AddChain: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
 
+  const { makeRequest } = useBackendRequest();
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -50,14 +51,19 @@ const AddChain: React.FC = () => {
     }
 
     try {
-      await axios.post(
-        `http://localhost:5000/add-chain/${selectedProject.id}`,
+      await makeRequest(`/add-chain/${selectedProject.id}`, {
+        method: "POST",
+        data: chain,
+      });
+      /* await axios.post(
+        `${backendUrl}/add-chain/${selectedProject.id}`, //`http://localhost:5000/add-chain/${selectedProject.id}`,
         chain
-      );
+      ); */
       setSuccessMessage("Chain added successfully!");
       setErrorMessage("");
       fetchChainsData(selectedProject.folder);
     } catch (error: any) {
+      console.log("Error adding chain:", error);
       setErrorMessage(error.response?.data?.message || "Error adding chain");
       setSuccessMessage("");
     }
@@ -66,7 +72,10 @@ const AddChain: React.FC = () => {
   // @ts-ignore
   const fetchChainsData = async (projectFolder: string) => {
     try {
-      const response = await axios.get("http://localhost:5000/get-chains");
+      const response = await makeRequest("/get-chains", {
+        method: "GET",
+      });
+      //const response = await axios.get(`${backendUrl}/get-chains`); // ("http://localhost:5000/get-chains"
 
       if (response.data.status === "success") {
         const chains = response.data.chains;

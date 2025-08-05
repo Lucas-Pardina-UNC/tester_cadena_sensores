@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { useBackendRequest } from "../utils/backendRequest";
+//import axios from "axios";
 
 interface RadiationTestProps {
   isOpen: boolean;
@@ -24,6 +25,8 @@ const RadiationTest: React.FC<RadiationTestProps> = ({
   const [offset, setOffset] = useState("");
   const [gain, setGain] = useState("");
 
+  const { makeRequest } = useBackendRequest();
+
   // Function to handle the "Run Test" button
   const handleRunTest = async () => {
     try {
@@ -31,12 +34,21 @@ const RadiationTest: React.FC<RadiationTestProps> = ({
       console.log(`Offset: ${offset}, Gain: ${gain}`);
 
       // Call the endpoint
-      const response = await axios.post("http://localhost:5000/single_test", {
+      const response = await makeRequest("/single_test", {
+        method: "POST",
+        data: {
+          file_path: projectFolder,
+          chain_id: selectedChainId,
+          offset: parseFloat(offset), // Convert offset to a number
+          gain: parseFloat(gain), // Convert gain to a number
+        },
+      });
+      /*const response = await axios.post("http://localhost:5000/single_test", {
         file_path: projectFolder,
         chain_id: selectedChainId,
         offset: parseFloat(offset), // Convert offset to a number
         gain: parseFloat(gain), // Convert gain to a number
-      });
+      });*/
 
       if (response.data.status === "success") {
         const logData = response.data.log_data;

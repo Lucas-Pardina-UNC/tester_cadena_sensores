@@ -1,11 +1,19 @@
 import React, { useState } from "react";
+import { useBackendRequest } from "../utils/backendRequest";
 
 interface WindTestProps {
   isOpen: boolean;
   onClose: () => void;
+  projectFolder: string; // Receiving project folder
+  selectedChainId: string; // Receiving selected chain ID
 }
 
-const WindTest: React.FC<WindTestProps> = ({ isOpen, onClose }) => {
+const WindTest: React.FC<WindTestProps> = ({
+  isOpen,
+  onClose,
+  projectFolder,
+  selectedChainId,
+}) => {
   if (!isOpen) return null; // Don't render the modal if it's not open
 
   // State variables for Wind Speed and Wind Direction
@@ -14,10 +22,46 @@ const WindTest: React.FC<WindTestProps> = ({ isOpen, onClose }) => {
   // @ts-ignore
   const [windDirection, setWindDirection] = useState(" - ");
 
-  // Placeholder function for "Run Test" button
-  const handleRunTest = () => {
-    // Logic to fetch data from the endpoint and update state will go here
-    console.log("Run Test button pressed");
+  const { makeRequest } = useBackendRequest();
+
+  const handleRunTest = async () => {
+    try {
+      const response = await makeRequest("/single_test", {
+        method: "POST",
+        data: {
+          file_path: projectFolder,
+          chain_id: selectedChainId,
+        },
+      });
+      console.log("Response:", response.data);
+
+      if (response.data.status === "success") {
+        const logData = response.data.log_data;
+
+        // Extract direct and net radiation values from the log
+        const windSpeedEntry = logData.find(
+          (entry: any) => entry[3] === "wind_speed"
+        );
+        const windDirectionEntry = logData.find(
+          (entry: any) => entry[3] === "wind_direction"
+        );
+
+        const windSpeedValue = windSpeedEntry ? windSpeedEntry[5] : null;
+        const windDirectionValue = windDirectionEntry
+          ? windDirectionEntry[5]
+          : null;
+
+        // Update state with the received values
+        setWindSpeed(windSpeedValue.toFixed(2));
+        setWindDirection(windDirectionValue.toFixed(2));
+
+        console.log("Test completed successfully:", logData);
+      } else {
+        console.error("Test failed:", response.data.error);
+      }
+    } catch (error) {
+      console.error("Error running test:", error);
+    }
   };
 
   return (

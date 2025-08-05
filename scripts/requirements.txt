@@ -1,10 +1,13 @@
 waitress
 Flask
-flask-cors
+flask_cors
+Flask[async]
 asyncio
-pymodbus>=3.2.0
+platformdirs
+pymodbus>=3.2.0,<3.8.7
 openpyxl
 pyserial
 tkinter
 multiprocessing
 platform
+sys

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios";
+import { useBackendRequest } from "../utils/backendRequest";
 
 interface Project {
   id: string;
@@ -27,11 +27,13 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
   const [nonOpenedProjects, setNonOpenedProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
+  const { makeRequest, loading, error } = useBackendRequest();
+
   const fetchOpenedProjects = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:5000/api/projects/opened"
-      );
+      const response = await makeRequest("/api/projects/opened", {
+        method: "GET",
+      });
       const openedProjects: Project[] = response.data.opened_projects;
       setOpenedProjects(openedProjects);
 
@@ -41,27 +43,30 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
       );
       setSelectedProject(selected || null);
     } catch (error) {
-      console.error("Error fetching projects: Hola", error);
+      console.error("Error fetching projects: ", error);
     }
   };
 
   const fetchNonOpenedProjects = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:5000/api/projects/non-opened"
-      );
-      const nonOpenedProjects: Project[] = response.data.non_opened_projects; // Explicitly typed array
-      setNonOpenedProjects(nonOpenedProjects);
-      //setOpenedProjects(openedProjects);
+      if (!loading && !error) {
+        const response = await makeRequest("/api/projects/non-opened", {
+          method: "GET",
+        });
+        const nonOpenedProjects: Project[] = response.data.non_opened_projects; // Explicitly typed array
+        setNonOpenedProjects(nonOpenedProjects);
+      }
     } catch (error) {
       console.error("Error fetching projects:", error);
     }
   };
 
   useEffect(() => {
-    fetchOpenedProjects(); // Initial fetch on component mount
-    //fetchNonOpenedProjects();
-  }, []);
+    if (!loading && !error) {
+      fetchOpenedProjects();
+      fetchNonOpenedProjects();
+    }
+  }, [loading, error]); // 👈 React will retry when backend becomes ready
 
   return (
     <ProjectContext.Provider

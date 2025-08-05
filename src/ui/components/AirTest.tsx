@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { useBackendRequest } from "../utils/backendRequest";
 
 interface AirTestProps {
   isOpen: boolean;
@@ -28,14 +28,24 @@ const AirTest: React.FC<AirTestProps> = ({
   >(null); // Store calibration coefficients
   const [showADCValues, setShowADCValues] = useState(false); // Toggle ADC values visibility
 
+  const { makeRequest } = useBackendRequest();
+
   // Function to handle the "Run Test" button
   const handleRunTest = async () => {
     try {
       // Call the endpoint
-      const response = await axios.post("http://localhost:5000/single_test", {
+      const response = await makeRequest("/single_test", {
+        method: "POST",
+        data: {
+          file_path: projectFolder,
+          chain_id: selectedChainId,
+        },
+      });
+      /*const response = await axios.post("http://localhost:5000/single_test", {
+        // "http://localhost:5000/single_test"
         file_path: projectFolder,
         chain_id: selectedChainId,
-      });
+      });*/
 
       if (response.data.status === "success") {
         const logData = response.data.log_data;

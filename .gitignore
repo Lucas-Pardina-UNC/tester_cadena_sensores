@@ -15,6 +15,8 @@ auto_test_log_1.txt
 
 #backend executables
 build
+src/electron/backend/app.exe
+src/electron/backend/app.spec
 
 # Logs
 logs
@@ -44,4 +46,4 @@ dist-electron
 *.sw?
 
 # Auto-generated scripts
-scripts/script.generated.js
+scripts/python_dep_installer_generated.ps1

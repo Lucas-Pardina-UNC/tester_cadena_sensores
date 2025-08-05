@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useProjectContext } from "./ProjectContext";
 import { useChainsContext } from "./ChainsContext";
 import SlaveDetectionModal from "./SlaveDetectionModal";
 import { useAlert } from "./CustomAlertContext";
+import { useBackendRequest } from "../utils/backendRequest";
 
 interface Slave {
   slave_id: number;
@@ -56,6 +56,9 @@ const AddChainModal: React.FC<AddChainModalProps> = ({ isOpen, onClose }) => {
   const [slaveTypesList, setSlaveTypesList] = useState<string[]>([]);
   const [isDetectModalOpen, setDetectModalOpen] = useState<boolean>(false); // State to control the new modal
   const { showAlert } = useAlert();
+  const { makeRequest } = useBackendRequest();
+
+  //const { backendUrl, loading, error } = useBackendUrl();
 
   const resetForm = () => {
     setChain({
@@ -72,7 +75,10 @@ const AddChainModal: React.FC<AddChainModalProps> = ({ isOpen, onClose }) => {
 
   const fetchComPorts = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/list-com-ports");
+      const response = await makeRequest("/list-com-ports", {
+        method: "GET",
+      });
+      //const response = await axios.get("http://localhost:5000/list-com-ports"); // "http://localhost:5000/list-com-ports"
       if (response.data.status === "success") {
         setComPorts(response.data.ports);
       } else {
@@ -144,6 +150,8 @@ const AddChainModal: React.FC<AddChainModalProps> = ({ isOpen, onClose }) => {
   };
 
   const handleSubmit = async () => {
+    console.log("Submitting chain:");
+
     if (!selectedProject) {
       return;
     }
@@ -155,10 +163,11 @@ const AddChainModal: React.FC<AddChainModalProps> = ({ isOpen, onClose }) => {
     }
 
     try {
-      await axios.post(
-        `http://localhost:5000/add-chain/${selectedProject.id}`,
-        chain
-      );
+      //await axios.post("http://localhost:5000/list-com-ports", chain);
+      await makeRequest(`/add-chain/${selectedProject.id}`, {
+        method: "POST",
+        data: chain,
+      });
       await showAlert("Chain added successfully!");
       await fetchChainsData();
       resetForm();

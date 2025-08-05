@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { useBackendRequest } from "../utils/backendRequest";
 
 interface TemperatureTestProps {
   isOpen: boolean;
@@ -23,13 +23,17 @@ const TemperatureTest: React.FC<TemperatureTestProps> = ({
   const [adcValues, setAdcValues] = useState<string[]>(Array(17).fill(" - "));
   const [showAdcValues, setShowAdcValues] = useState<boolean>(false); // State to toggle ADC visibility
 
+  const { makeRequest } = useBackendRequest();
+
   const handleRunTest = async () => {
     try {
-      const response = await axios.post("http://localhost:5000/single_test", {
-        file_path: projectFolder,
-        chain_id: selectedChainId,
+      const response = await makeRequest("/single_test", {
+        method: "POST",
+        data: {
+          file_path: projectFolder,
+          chain_id: selectedChainId,
+        },
       });
-
       console.log("Response:", response.data);
 
       if (response.data.status === "success") {

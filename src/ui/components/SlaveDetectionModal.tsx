@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { useBackendRequest } from "../utils/backendRequest";
 
 interface Slave {
   slave_id: number;
@@ -38,6 +38,8 @@ const SlaveDetectionModal: React.FC<SlaveDetectionModalProps> = ({
   const [responsiveSlaves, setResponsiveSlaves] = useState<Slave[]>([]);
   const [isReadyEnabled, setIsReadyEnabled] = useState<boolean>(false);
   const [isPhSensor, setIsPhSensor] = useState<boolean>(false); // New state for the checkbox
+
+  const { makeRequest } = useBackendRequest();
 
   const handleModeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDetectionMode(e.target.value);
@@ -106,10 +108,10 @@ const SlaveDetectionModal: React.FC<SlaveDetectionModalProps> = ({
 
     try {
       setConsoleMessages((prev) => [...prev, "Starting slave detection..."]);
-      const response = await axios.post(
-        "http://localhost:5000/list_sensors",
-        payload
-      );
+      const response = await makeRequest("/list_sensors", {
+        method: "POST",
+        data: payload,
+      });
 
       if (response.data.responsive_slaves) {
         setResponsiveSlaves(response.data.responsive_slaves);

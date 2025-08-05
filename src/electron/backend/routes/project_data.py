@@ -1,5 +1,6 @@
 import json
 import uuid
+import os
 from typing import Union
 from pymodbus.client import AsyncModbusSerialClient
 from .framer_selector import get_framer #from pymodbus import FramerType
@@ -101,6 +102,8 @@ class Project:
         """
         Load project details and chains from a JSON file.
         """
+        if not os.path.isfile(file_path):
+            raise FileNotFoundError(f"Config file not found: {file_path}")
         with open(file_path, "r") as json_file:
             data = json.load(json_file)
 

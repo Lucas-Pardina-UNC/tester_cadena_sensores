@@ -217,9 +217,6 @@ async def single_test():
     offset = data.get("offset")
     chain_id = int(s_chain_id) - 1  # Convert to zero-based index
     log_data = []
-    
-    print("Llegue al endpoint single_test", flush=True)
-    print(f"Me llego el filepath {file_path}", flush=True)
 
     if not file_path:
         return jsonify({"error": "file_path is required"}), 400
@@ -257,7 +254,7 @@ async def single_test():
                         pass
                         # print(f"Error al cerrar el cliente: {e}")
 
-    print(f"Log data: {log_data}", flush=True)
+    #print(f"Log data: {log_data}", flush=True)
 
     return jsonify({"status": "success", "log_data":log_data})
         
@@ -455,7 +452,7 @@ async def auto_test_cycle(client, chain_port, chain_protocol, responsive_slaves:
     file_exists = os.path.isfile(csv_file)
 
     # Print for debugging
-    print(f"Log data: {log_data}", flush=True)
+    #print(f"Log data: {log_data}", flush=True)
 
     # Write to CSV as rows
     if log_data:
